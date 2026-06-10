@@ -2,13 +2,9 @@
 
 #include <QDebug>
 
-#include <X11/X.h>
-#include <X11/Xlibint.h>
 #include <X11/Xlib.h>
 #include <X11/Xutil.h>
-#include <X11/XKBlib.h>
 #include <X11/extensions/record.h>
-#include <X11/extensions/XTest.h>
 
 // Undef X11 macros that clash with Qt
 #undef Bool
@@ -22,15 +18,6 @@
 #undef None
 #undef Status
 #undef Unsorted
-
-typedef union {
-    unsigned char    type;
-    xEvent           event;
-    xResourceReq     req;
-    xGenericReply    reply;
-    xError           error;
-    xConnSetupPrefix setup;
-} XRecordDatum;
 
 // X11 event type constants (re-defined after undef above)
 static constexpr int X11_KeyPress      = 2;
@@ -142,15 +129,14 @@ private:
     }
 
     void processEvent(XRecordInterceptData *hook) {
-        if (hook->category != XRecordFromServer) {
+        if (hook->category != XRecordFromServer || hook->data_len < 2) {
             XRecordFreeData(hook);
             return;
         }
 
-        auto *data = reinterpret_cast<XRecordDatum *>(hook->data);
-        unsigned char buttonCode = data->event.u.u.detail;
+        int eventType = hook->data[0];
+        unsigned char buttonCode = hook->data[1];
         int absX = 0, absY = 0, relX = 0, relY = 0;
-        int eventType = data->type;
 
         double sens = m_tracker->m_sensibility;
 

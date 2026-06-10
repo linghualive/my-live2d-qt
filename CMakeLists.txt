@@ -186,10 +186,8 @@ if(PLATFORM_X11)
     target_link_libraries(QDesktopPet PRIVATE
         X11::X11
         X11::Xext
+        X11::Xtst
     )
-    if(X11_Xtst_FOUND)
-        target_link_libraries(QDesktopPet PRIVATE X11::Xtst)
-    endif()
     target_compile_definitions(QDesktopPet PRIVATE HAS_X11)
 endif()
 

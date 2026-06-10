@@ -12,9 +12,12 @@ elseif(WIN32)
 elseif(UNIX)
     set(LIVE2D_PLATFORM_DIR "linux-${CMAKE_SYSTEM_PROCESSOR}")
 
-    find_package(X11 COMPONENTS Xext)
-    if(X11_FOUND AND X11_Xext_FOUND)
+    find_package(X11 COMPONENTS Xext Xtst)
+    if(X11_FOUND AND X11_Xext_FOUND AND X11_Xtst_FOUND)
         set(PLATFORM_X11 ON)
+    elseif(X11_FOUND AND X11_Xext_FOUND)
+        message(WARNING "X11 found but libXtst missing — X11 mouse tracking disabled. "
+                        "Install libxtst-dev (Debian/Ubuntu) or libxtst (Arch).")
     endif()
 
     find_package(PkgConfig)
@@ -24,8 +27,6 @@ elseif(UNIX)
             set(PLATFORM_WAYLAND ON)
         endif()
     endif()
-
-    find_package(X11 COMPONENTS Xtst)
 endif()
 
 message(STATUS "Platform detection:")

@@ -26,22 +26,28 @@
 
 ### Linux 额外依赖
 
-**X11 环境：**
+**Arch Linux / Manjaro：**
 ```bash
-# Debian/Ubuntu
-sudo apt install libx11-dev libxext-dev libxtst-dev
-
-# Fedora
-sudo dnf install libX11-devel libXext-devel libXtst-devel
+sudo pacman -S base-devel cmake qt6-base mesa libx11 libxext libxtst libxkbcommon
+# Wayland 支持（可选）：
+sudo pacman -S wayland pkg-config
 ```
 
-**Wayland 环境：**
+**Debian / Ubuntu：**
 ```bash
-# Debian/Ubuntu
-sudo apt install libwayland-dev
+sudo apt install build-essential cmake \
+    qt6-base-dev libqt6opengl6-dev qt6-base-private-dev \
+    libgl1-mesa-dev libx11-dev libxext-dev libxtst-dev libxkbcommon-dev
+# Wayland 支持（可选）：
+sudo apt install libwayland-dev pkg-config
+```
 
-# Fedora
-sudo dnf install wayland-devel
+**Fedora：**
+```bash
+sudo dnf install gcc-c++ cmake qt6-qtbase-devel mesa-libGL-devel \
+    libX11-devel libXext-devel libXtst-devel libxkbcommon-devel
+# Wayland 支持（可选）：
+sudo dnf install wayland-devel pkg-config
 ```
 
 > Linux 上 X11 和 Wayland 支持会自动检测，可以同时编译。
@@ -51,29 +57,27 @@ sudo dnf install wayland-devel
 ### macOS
 
 ```bash
-mkdir build && cd build
-cmake ..
-make -j$(sysctl -n hw.ncpu)
+cmake -B build
+cmake --build build -j$(sysctl -n hw.ncpu)
 
 # 生成 QDesktopPet.app，可直接双击运行
-open QDesktopPet.app
+open build/QDesktopPet.app
 
 # 可选：打包 Qt 框架到 .app 中（用于分发）
-make deploy
+cmake --build build --target deploy
 
 # 可选：安装到 Applications
-cp -R QDesktopPet.app ~/Applications/
+cp -R build/QDesktopPet.app ~/Applications/
 ```
 
 ### Linux
 
 ```bash
-mkdir build && cd build
-cmake ..
-make -j$(nproc)
+cmake -B build
+cmake --build build -j$(nproc)
 
 # 运行
-./QDesktopPet
+./build/QDesktopPet
 ```
 
 CMake 会自动检测 X11 和 Wayland 库，输出类似：
@@ -83,6 +87,8 @@ CMake 会自动检测 X11 和 Wayland 库，输出类似：
 --   X11:     ON
 --   Wayland: ON
 ```
+
+如果 X11 检测结果为 OFF，请确认 `libxtst` 已安装（X11 RECORD 扩展用于鼠标追踪）。
 
 ### 添加模型
 
