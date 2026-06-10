@@ -100,16 +100,17 @@ void QLive2dWidget::mouseMove(QPoint rel) {
     appDelegateInstance->rawMouseMoveEvent(rel);
 }
 
-void QLive2dWidget::setModel(string model, string modelFile) {
+bool QLive2dWidget::setModel(string model, string modelFile) {
     this->makeCurrent();
     if (modelFile.empty()) {
         modelFile = model + ".model3.json";
     }
-    appLive2DManagerInstance->ChangeModel(model, this->resourceDir, modelFile);
+    bool ok = appLive2DManagerInstance->ChangeModel(model, this->resourceDir, modelFile);
     this->clear();
     glFinish();
     this->doneCurrent();
     this->repaint();
+    return ok;
 }
 void QLive2dWidget::setFrameRate(int fps) {
     if (fps > 0 && m_timer) {

@@ -99,7 +99,7 @@ public:
      */
     void SetViewMatrix(Live2D::Cubism::Framework::CubismMatrix44* m);
 
-    void ChangeModel(std::string model, std::string resourcePath, std::string modelFile = "");
+    bool ChangeModel(std::string model, std::string resourcePath, std::string modelFile = "");
 
     std::vector<std::string> GetExpressionNames();
 

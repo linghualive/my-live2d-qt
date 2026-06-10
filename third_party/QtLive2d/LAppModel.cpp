@@ -82,7 +82,7 @@ LAppModel::~LAppModel()
     }
 }
 
-void LAppModel::LoadAssets(const csmChar* dir, const csmChar* fileName)
+bool LAppModel::LoadAssets(const csmChar* dir, const csmChar* fileName)
 {
     _modelHomeDir = dir;
 
@@ -98,7 +98,7 @@ void LAppModel::LoadAssets(const csmChar* dir, const csmChar* fileName)
     if (!buffer || size == 0)
     {
         LAppPal::PrintLog("[APP]failed to load model file: %s", path.GetRawString());
-        return;
+        return false;
     }
     ICubismModelSetting* setting = new CubismModelSettingJson(buffer, size);
     DeleteBuffer(buffer, path.GetRawString());
@@ -107,7 +107,7 @@ void LAppModel::LoadAssets(const csmChar* dir, const csmChar* fileName)
     {
         LAppPal::PrintLog("[APP]invalid model setting (no model file): %s", fileName);
         delete setting;
-        return;
+        return false;
     }
 
     SetupModel(setting);
@@ -115,12 +115,13 @@ void LAppModel::LoadAssets(const csmChar* dir, const csmChar* fileName)
     if (!GetModel())
     {
         LAppPal::PrintLog("[APP]failed to create model from: %s", fileName);
-        return;
+        return false;
     }
 
     CreateRenderer();
 
     SetupTextures();
+    return true;
 }
 
 
@@ -146,8 +147,19 @@ void LAppModel::SetupModel(ICubismModelSetting* setting)
         }
 
         buffer = CreateBuffer(path.GetRawString(), &size);
-        LoadModel(buffer, size);
+        if (!buffer || size == 0)
+        {
+            LAppPal::PrintLog("[APP]failed to load moc file: %s", path.GetRawString());
+            return;
+        }
+        LoadModel(buffer, size, true);
         DeleteBuffer(buffer, path.GetRawString());
+
+        if (!GetModel())
+        {
+            LAppPal::PrintLog("[APP]model is incompatible or corrupted: %s", path.GetRawString());
+            return;
+        }
     }
 
     //Expression
@@ -326,7 +338,19 @@ void LAppModel::PreloadMotionGroup(const csmChar* group)
         csmByte* buffer;
         csmSizeInt size;
         buffer = CreateBuffer(path.GetRawString(), &size);
+        if (!buffer || size == 0)
+        {
+            LAppPal::PrintLog("[APP]failed to load motion file: %s", path.GetRawString());
+            continue;
+        }
         CubismMotion* tmpMotion = static_cast<CubismMotion*>(LoadMotion(buffer, size, name.GetRawString()));
+        DeleteBuffer(buffer, path.GetRawString());
+
+        if (!tmpMotion)
+        {
+            LAppPal::PrintLog("[APP]failed to parse motion: %s", path.GetRawString());
+            continue;
+        }
 
         csmFloat32 fadeTime = _modelSetting->GetMotionFadeInTimeValue(group, i);
         if (fadeTime >= 0.0f)
@@ -346,8 +370,6 @@ void LAppModel::PreloadMotionGroup(const csmChar* group)
             ACubismMotion::Delete(_motions[name]);
         }
         _motions[name] = tmpMotion;
-
-        DeleteBuffer(buffer, path.GetRawString());
     }
 }
 
@@ -517,7 +539,20 @@ CubismMotionQueueEntryHandle LAppModel::StartMotion(const csmChar* group, csmInt
         csmByte* buffer;
         csmSizeInt size;
         buffer = CreateBuffer(path.GetRawString(), &size);
+        if (!buffer || size == 0)
+        {
+            LAppPal::PrintLog("[APP]failed to load motion file: %s", path.GetRawString());
+            return InvalidMotionQueueEntryHandleValue;
+        }
         motion = static_cast<CubismMotion*>(LoadMotion(buffer, size, NULL, onFinishedMotionHandler));
+        DeleteBuffer(buffer, path.GetRawString());
+
+        if (!motion)
+        {
+            LAppPal::PrintLog("[APP]failed to parse motion: %s", path.GetRawString());
+            return InvalidMotionQueueEntryHandleValue;
+        }
+
         csmFloat32 fadeTime = _modelSetting->GetMotionFadeInTimeValue(group, no);
         if (fadeTime >= 0.0f)
         {
@@ -531,8 +566,6 @@ CubismMotionQueueEntryHandle LAppModel::StartMotion(const csmChar* group, csmInt
         }
         motion->SetEffectIds(_eyeBlinkIds, _lipSyncIds);
         autoDelete = true; // 終了時にメモリから削除
-
-        DeleteBuffer(buffer, path.GetRawString());
     }
     else
     {

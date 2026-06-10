@@ -220,14 +220,17 @@ void LAppLive2DManager::ChangeScene(Csm::csmInt32 index)
     }
 }
 
-void LAppLive2DManager::ChangeModel(std::string model, std::string resourceDir, std::string modelFile) {
+bool LAppLive2DManager::ChangeModel(std::string model, std::string resourceDir, std::string modelFile) {
     using namespace std;
     string modelPath = resourceDir + model + "/";
     string modelJsonName = modelFile.empty() ? model + ".model3.json" : modelFile;
     ReleaseAllModel();
     LAppDelegate::GetInstance()->GetTextureManager()->ReleaseTextures();
     _models.PushBack(new LAppModel());
-    _models[0]->LoadAssets(modelPath.c_str(), modelJsonName.c_str());
+    if (!_models[0]->LoadAssets(modelPath.c_str(), modelJsonName.c_str()))
+    {
+        return false;
+    }
     LAppModel *appModel = _models[0];
     this->_expressions = appModel->getExpressions();
     {
@@ -259,6 +262,7 @@ void LAppLive2DManager::ChangeModel(std::string model, std::string resourceDir, 
                                                                               clearColor[2]);
         }
     }
+    return true;
 }
 
 csmUint32 LAppLive2DManager::GetModelNum() const

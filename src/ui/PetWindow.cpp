@@ -168,18 +168,25 @@ void PetWindow::switchModel(const QString &modelId)
         return;
     }
 
+    if (!loadModelIntoWidget(modelId)) {
+        QMessageBox::warning(m_preferencesDialog ? static_cast<QWidget*>(m_preferencesDialog) : static_cast<QWidget*>(this),
+            QStringLiteral("Model Error"),
+            QStringLiteral("Failed to load model \"%1\". It may be incompatible "
+                           "with the current Live2D SDK.").arg(modelId));
+        return;
+    }
+
     m_config->setModelId(modelId);
     m_config->save();
     m_previewOriginalModelId.clear();
-    loadModelIntoWidget(modelId);
 }
 
-void PetWindow::loadModelIntoWidget(const QString &modelId)
+bool PetWindow::loadModelIntoWidget(const QString &modelId)
 {
-    if (!m_initialized || !m_live2dWidget) return;
+    if (!m_initialized || !m_live2dWidget) return false;
 
     ModelInfo info = m_modelManager->modelInfo(modelId);
-    if (info.id.isEmpty()) return;
+    if (info.id.isEmpty()) return false;
 
     writePendingModel(modelId);
 
@@ -188,10 +195,16 @@ void PetWindow::loadModelIntoWidget(const QString &modelId)
     modelDir.cdUp();
     QString parentPath = modelDir.absolutePath() + QStringLiteral("/");
     m_live2dWidget->setResDir(parentPath.toStdString());
-    m_live2dWidget->setModel(dirName.toStdString(),
-                             info.modelFile.toStdString());
+    bool ok = m_live2dWidget->setModel(dirName.toStdString(),
+                                       info.modelFile.toStdString());
 
     clearPendingModel();
+
+    if (!ok) {
+        blacklistModel(modelId);
+    }
+
+    return ok;
 }
 
 void PetWindow::previewModel(const QString &modelId)
@@ -210,7 +223,16 @@ void PetWindow::previewModel(const QString &modelId)
         m_previewOriginalModelId = m_config->modelId();
     }
 
-    loadModelIntoWidget(modelId);
+    if (!loadModelIntoWidget(modelId)) {
+        QMessageBox::warning(m_preferencesDialog ? static_cast<QWidget*>(m_preferencesDialog) : static_cast<QWidget*>(this),
+            QStringLiteral("Model Error"),
+            QStringLiteral("Failed to load model \"%1\". It may be incompatible "
+                           "with the current Live2D SDK.").arg(modelId));
+        if (!m_previewOriginalModelId.isEmpty()) {
+            loadModelIntoWidget(m_previewOriginalModelId);
+        }
+        return;
+    }
 
     QImage preview = m_live2dWidget->grabFramebuffer();
     if (m_preferencesDialog) {
@@ -266,7 +288,12 @@ void PetWindow::onLive2dInitialized(QLive2dWidget *wid)
 
     const QString modelId = m_config->modelId();
     if (!modelId.isEmpty()) {
-        loadModelIntoWidget(modelId);
+        if (!loadModelIntoWidget(modelId)) {
+            QMessageBox::warning(this, QStringLiteral("Model Error"),
+                QStringLiteral("Failed to load model \"%1\". It may be incompatible "
+                               "with the current Live2D SDK.").arg(modelId));
+            m_config->setModelId(QString());
+        }
     }
 
     wid->setFrameRate(m_config->frameRate());

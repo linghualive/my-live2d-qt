@@ -43,7 +43,7 @@ private slots:
 
 private:
     void initMouseTracker();
-    void loadModelIntoWidget(const QString &modelId);
+    bool loadModelIntoWidget(const QString &modelId);
     bool isModelBlacklisted(const QString &modelId) const;
     void blacklistModel(const QString &modelId);
     void writePendingModel(const QString &modelId);
