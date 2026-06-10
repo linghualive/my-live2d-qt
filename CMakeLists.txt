@@ -210,7 +210,7 @@ endif()
 
 if(PLATFORM_WINDOWS)
     target_link_libraries(QDesktopPet PRIVATE user32 advapi32 opengl32)
-    target_compile_definitions(QDesktopPet PRIVATE HAS_WINDOWS CSM_TARGET_WIN_GL)
+    target_compile_definitions(QDesktopPet PRIVATE HAS_WINDOWS)
     set_target_properties(QDesktopPet PROPERTIES WIN32_EXECUTABLE TRUE)
     add_custom_command(TARGET QDesktopPet POST_BUILD
         COMMAND ${CMAKE_COMMAND} -E copy_if_different
@@ -235,21 +235,23 @@ if(APPLE)
     )
 endif()
 
-# --- Copy Resources ---
-if(APPLE)
-    add_custom_command(TARGET QDesktopPet POST_BUILD
-        COMMAND ${CMAKE_COMMAND} -E copy_directory
-            "${CMAKE_SOURCE_DIR}/Resources"
-            "$<TARGET_BUNDLE_CONTENT_DIR:QDesktopPet>/Resources"
-        COMMENT "Copying model resources into app bundle..."
-    )
-else()
-    add_custom_command(TARGET QDesktopPet POST_BUILD
-        COMMAND ${CMAKE_COMMAND} -E copy_directory
-            "${CMAKE_SOURCE_DIR}/Resources"
-            "$<TARGET_FILE_DIR:QDesktopPet>/Resources"
-        COMMENT "Copying bundled model resources..."
-    )
+# --- Copy Resources (if present) ---
+if(EXISTS "${CMAKE_SOURCE_DIR}/Resources")
+    if(APPLE)
+        add_custom_command(TARGET QDesktopPet POST_BUILD
+            COMMAND ${CMAKE_COMMAND} -E copy_directory
+                "${CMAKE_SOURCE_DIR}/Resources"
+                "$<TARGET_BUNDLE_CONTENT_DIR:QDesktopPet>/Resources"
+            COMMENT "Copying model resources into app bundle..."
+        )
+    else()
+        add_custom_command(TARGET QDesktopPet POST_BUILD
+            COMMAND ${CMAKE_COMMAND} -E copy_directory
+                "${CMAKE_SOURCE_DIR}/Resources"
+                "$<TARGET_FILE_DIR:QDesktopPet>/Resources"
+            COMMENT "Copying bundled model resources..."
+        )
+    endif()
 endif()
 
 # --- macOS: macdeployqt target ---
