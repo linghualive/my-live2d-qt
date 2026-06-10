@@ -203,10 +203,10 @@ void CubismRendererProfile_OpenGLES2::Save()
     glGetIntegerv(GL_CURRENT_PROGRAM, &_lastProgram);
 
     glGetIntegerv(GL_ACTIVE_TEXTURE, &_lastActiveTexture);
-    glActiveTexture(GL_TEXTURE1); //テクスチャユニット1をアクティブに（以後の設定対象とする）
+    OpenGLHelper::get()->glActiveTexture(GL_TEXTURE1);
     glGetIntegerv(GL_TEXTURE_BINDING_2D, &_lastTexture1Binding2D);
 
-    glActiveTexture(GL_TEXTURE0); //テクスチャユニット0をアクティブに（以後の設定対象とする）
+    OpenGLHelper::get()->glActiveTexture(GL_TEXTURE0);
     glGetIntegerv(GL_TEXTURE_BINDING_2D, &_lastTexture0Binding2D);
 
     OpenGLHelper::get()->glGetVertexAttribiv(0, GL_VERTEX_ATTRIB_ARRAY_ENABLED, &_lastVertexAttribArrayEnabled[0]);
@@ -258,13 +258,13 @@ void CubismRendererProfile_OpenGLES2::Restore()
     OpenGLHelper::get()->glBindBuffer(GL_ARRAY_BUFFER, _lastArrayBufferBinding); //前にバッファがバインドされていたら破棄する必要がある
     OpenGLHelper::get()->glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, _lastElementArrayBufferBinding);
 
-    glActiveTexture(GL_TEXTURE1); //テクスチャユニット1を復元
+    OpenGLHelper::get()->glActiveTexture(GL_TEXTURE1);
     glBindTexture(GL_TEXTURE_2D, _lastTexture1Binding2D);
 
-    glActiveTexture(GL_TEXTURE0); //テクスチャユニット0を復元
+    OpenGLHelper::get()->glActiveTexture(GL_TEXTURE0);
     glBindTexture(GL_TEXTURE_2D, _lastTexture0Binding2D);
 
-    glActiveTexture(_lastActiveTexture);
+    OpenGLHelper::get()->glActiveTexture(_lastActiveTexture);
 
     // restore blending
     OpenGLHelper::get()->glBlendFuncSeparate(_lastBlending[0], _lastBlending[1], _lastBlending[2], _lastBlending[3]);

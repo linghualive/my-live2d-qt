@@ -33,7 +33,7 @@ jobs:
         run: |
           mkdir -p dist/QDesktopPet-linux-x11
           cp build/QDesktopPet dist/QDesktopPet-linux-x11/
-          cp -r build/Resources dist/QDesktopPet-linux-x11/
+          [ -d build/Resources ] && cp -r build/Resources dist/QDesktopPet-linux-x11/ || true
           tar czf QDesktopPet-linux-x11.tar.gz -C dist QDesktopPet-linux-x11
 
       - uses: actions/upload-artifact@v4
@@ -68,7 +68,7 @@ jobs:
         run: |
           mkdir -p dist/QDesktopPet-linux-wayland
           cp build/QDesktopPet dist/QDesktopPet-linux-wayland/
-          cp -r build/Resources dist/QDesktopPet-linux-wayland/
+          [ -d build/Resources ] && cp -r build/Resources dist/QDesktopPet-linux-wayland/ || true
           tar czf QDesktopPet-linux-wayland.tar.gz -C dist QDesktopPet-linux-wayland
 
       - uses: actions/upload-artifact@v4

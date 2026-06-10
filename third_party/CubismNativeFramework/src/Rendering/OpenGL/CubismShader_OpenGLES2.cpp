@@ -861,7 +861,7 @@ void CubismShader_OpenGLES2::SetupShaderProgramForDraw(CubismRenderer_OpenGLES2*
 
     if (masked)
     {
-        glActiveTexture(GL_TEXTURE1);
+        OpenGLHelper::get()->glActiveTexture(GL_TEXTURE1);
 
         // frameBufferに書かれたテクスチャ
         GLuint tex = renderer->GetMaskBuffer(renderer->GetClippingContextBufferForDraw()->_bufferIndex)->GetColorBuffer();
@@ -1084,7 +1084,7 @@ void CubismShader_OpenGLES2::SetupTexture(CubismRenderer_OpenGLES2* renderer, co
 {
     const csmInt32 textureIndex = model.GetDrawableTextureIndex(index);
     const GLuint textureId = renderer->GetBindedTextureId(textureIndex);
-    glActiveTexture(GL_TEXTURE0);
+    OpenGLHelper::get()->glActiveTexture(GL_TEXTURE0);
     glBindTexture(GL_TEXTURE_2D, textureId);
     OpenGLHelper::get()->glUniform1i(shaderSet->SamplerTexture0Location, 0);
 }
