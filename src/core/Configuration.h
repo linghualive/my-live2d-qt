@@ -29,6 +29,9 @@ public:
     QSize widgetSize() const;
     void setWidgetSize(const QSize &size);
 
+    int frameRate() const;
+    void setFrameRate(int fps);
+
     void save();
 
 signals:
@@ -46,6 +49,7 @@ private:
     bool m_widgetOnLeft = true;
     double m_mouseSensibility = 1.0;
     QSize m_widgetSize{500, 500};
+    int m_frameRate = 30;
 };
 
 #endif // CONFIGURATION_H

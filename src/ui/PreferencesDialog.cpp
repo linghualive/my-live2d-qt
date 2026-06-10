@@ -7,6 +7,7 @@
 #include "platform/AutoStart.h"
 
 #include <QCheckBox>
+#include <QComboBox>
 #include <QDir>
 #include <QDirIterator>
 #include <QFileDialog>
@@ -455,6 +456,13 @@ QWidget *PreferencesDialog::createSettingsPage()
     behaviorLayout->addRow(QStringLiteral("Sensibility"), sensibilityLayout);
     behaviorLayout->addRow(QString(), makeHint(QStringLiteral("Mouse tracking sensitivity for eye follow")));
 
+    m_frameRateCombo = new QComboBox(page);
+    m_frameRateCombo->addItem(QStringLiteral("15 FPS (Power Saver)"), 15);
+    m_frameRateCombo->addItem(QStringLiteral("30 FPS (Balanced)"), 30);
+    m_frameRateCombo->addItem(QStringLiteral("60 FPS (Smooth)"), 60);
+    behaviorLayout->addRow(QStringLiteral("Frame Rate"), m_frameRateCombo);
+    behaviorLayout->addRow(QString(), makeHint(QStringLiteral("Higher FPS = smoother animation but more CPU usage")));
+
     m_hideOnHoverCheck = new QCheckBox(QStringLiteral("Hide when mouse hovers over pet"), page);
     behaviorLayout->addRow(QString(), m_hideOnHoverCheck);
 
@@ -656,6 +664,11 @@ void PreferencesDialog::loadSettingsFromConfig()
     }
 
     m_hideOnHoverCheck->setChecked(m_config->hideOnHover());
+
+    int fps = m_config->frameRate();
+    int comboIndex = m_frameRateCombo->findData(fps);
+    m_frameRateCombo->setCurrentIndex(comboIndex >= 0 ? comboIndex : 1);
+
     m_autoStartCheck->setChecked(AutoStart::isEnabled());
 }
 
@@ -665,6 +678,7 @@ void PreferencesDialog::onSettingsAccepted()
     m_config->setWidgetSize(QSize(m_widthSpin->value(), m_heightSpin->value()));
     m_config->setWidgetOnLeft(m_leftRadio->isChecked());
     m_config->setHideOnHover(m_hideOnHoverCheck->isChecked());
+    m_config->setFrameRate(m_frameRateCombo->currentData().toInt());
     m_config->save();
 
     AutoStart::setEnabled(m_autoStartCheck->isChecked());

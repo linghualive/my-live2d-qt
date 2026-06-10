@@ -74,6 +74,9 @@ PetWindow::PetWindow(Configuration *config, ModelManager *modelManager,
                 if (m_mouseTracker) {
                     m_mouseTracker->setMouseSensibility(m_config->mouseSensibility());
                 }
+                if (m_live2dWidget) {
+                    m_live2dWidget->setFrameRate(m_config->frameRate());
+                }
             });
         }
         m_preferencesDialog->show();
@@ -159,7 +162,8 @@ void PetWindow::onLive2dInitialized(QLive2dWidget *wid)
         }
     }
 
-    // Initialize mouse tracker now that we have a valid window ID
+    wid->setFrameRate(m_config->frameRate());
+
     initMouseTracker();
 }
 

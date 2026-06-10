@@ -14,6 +14,7 @@ class QSlider;
 class QSpinBox;
 class QRadioButton;
 class QCheckBox;
+class QComboBox;
 class ModelManager;
 class Configuration;
 
@@ -72,6 +73,7 @@ private:
     QRadioButton *m_leftRadio;
     QRadioButton *m_rightRadio;
     QCheckBox *m_hideOnHoverCheck;
+    QComboBox *m_frameRateCombo;
     QCheckBox *m_autoStartCheck;
 
     QMap<QString, QPixmap> m_thumbnailCache;

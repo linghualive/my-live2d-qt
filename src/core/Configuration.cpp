@@ -82,6 +82,19 @@ void Configuration::setWidgetSize(const QSize &size)
     }
 }
 
+int Configuration::frameRate() const
+{
+    return m_frameRate;
+}
+
+void Configuration::setFrameRate(int fps)
+{
+    if (m_frameRate != fps) {
+        m_frameRate = fps;
+        emit settingsChanged();
+    }
+}
+
 void Configuration::load()
 {
     m_modelId = m_settings->value(QStringLiteral("modelId"), QString()).toString();
@@ -89,6 +102,7 @@ void Configuration::load()
     m_widgetOnLeft = m_settings->value(QStringLiteral("widgetOnLeft"), true).toBool();
     m_mouseSensibility = m_settings->value(QStringLiteral("mouseSensibility"), 1.0).toDouble();
     m_widgetSize = m_settings->value(QStringLiteral("widgetSize"), QSize(500, 500)).toSize();
+    m_frameRate = m_settings->value(QStringLiteral("frameRate"), 30).toInt();
 }
 
 void Configuration::save()
@@ -98,6 +112,7 @@ void Configuration::save()
     m_settings->setValue(QStringLiteral("widgetOnLeft"), m_widgetOnLeft);
     m_settings->setValue(QStringLiteral("mouseSensibility"), m_mouseSensibility);
     m_settings->setValue(QStringLiteral("widgetSize"), m_widgetSize);
+    m_settings->setValue(QStringLiteral("frameRate"), m_frameRate);
     m_settings->sync();
 }
 

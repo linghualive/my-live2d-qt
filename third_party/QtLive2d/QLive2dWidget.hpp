@@ -3,6 +3,7 @@
 #include <QOpenGLWidget>
 #include <QOpenGLFunctions>
 #include <QElapsedTimer>
+#include <QTimer>
 #include <QGuiApplication>
 #include <QScreen>
 #include <QList>
@@ -22,6 +23,7 @@ public:
     void clear();
     void setResDir(string resDir);
     void setModel(string model);
+    void setFrameRate(int fps);
     void mouseMove(QPoint rel);
     void mousePress(QPoint rel);
     void mouseRelease(QPoint rel);
@@ -43,6 +45,7 @@ private slots:
 private:
     void calcRatios();
     std::string resourceDir = "Resources";
+    QTimer *m_timer = nullptr;
 
 signals:
     void initialized(QLive2dWidget *wid);

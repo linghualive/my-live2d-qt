@@ -29,10 +29,9 @@ QLive2dWidget::QLive2dWidget(QWidget *parent):
 
     elapsedTimer.start();
 
-    //Add the render into Timer to make the animation
-    QTimer *timer = new QTimer(this);
-    connect(timer, &QTimer::timeout, this, &QLive2dWidget::updateMotions);
-    timer->start(66);
+    m_timer = new QTimer(this);
+    connect(m_timer, &QTimer::timeout, this, &QLive2dWidget::updateMotions);
+    m_timer->start(33);
 
     // the OpenGL in OpenGLWidget won't scale by HDPI setting, we need to scale manually.
     ratio = parent->devicePixelRatio();
@@ -109,6 +108,12 @@ void QLive2dWidget::setModel(string model) {
     this->doneCurrent();
     this->repaint();
 }
+void QLive2dWidget::setFrameRate(int fps) {
+    if (fps > 0 && m_timer) {
+        m_timer->setInterval(1000 / fps);
+    }
+}
+
 void QLive2dWidget::setResDir(string resDir) {
     this->resourceDir = resDir;
 }
