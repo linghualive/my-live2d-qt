@@ -193,13 +193,14 @@ void PetWindow::onMouseMoved(QPoint rel, QPoint raw)
 
     // Hide-on-hover logic
     if (m_config->hideOnHover()) {
-        // Convert raw screen coordinates to widget-local coordinates
         QPoint localPos = m_live2dWidget->mapFromGlobal(raw);
         QRect widgetRect = m_live2dWidget->rect();
 
         if (widgetRect.contains(localPos) && m_live2dWidget->isVisible()) {
             m_live2dWidget->hide();
+            setAttribute(Qt::WA_TransparentForMouseEvents, true);
         } else if (!widgetRect.contains(localPos) && !m_live2dWidget->isVisible()) {
+            setAttribute(Qt::WA_TransparentForMouseEvents, false);
             m_live2dWidget->show();
         }
     }
