@@ -24,6 +24,7 @@
 #include <QSlider>
 #include <QSpinBox>
 #include <QStackedWidget>
+#include <QImage>
 #include <QVBoxLayout>
 
 static const char *kStyleSheet = R"(
@@ -229,6 +230,14 @@ PreferencesDialog::PreferencesDialog(ModelManager *manager,
     resize(960, 600);
     setStyleSheet(QString::fromUtf8(kStyleSheet));
     setupUi();
+
+    m_previewDebounce.setSingleShot(true);
+    m_previewDebounce.setInterval(300);
+    connect(&m_previewDebounce, &QTimer::timeout, this, [this]() {
+        if (!m_pendingPreviewModelId.isEmpty()) {
+            emit modelPreviewRequested(m_pendingPreviewModelId);
+        }
+    });
 
     connect(m_manager, &ModelManager::modelsChanged,
             this, &PreferencesDialog::refreshModelList);
@@ -568,6 +577,9 @@ void PreferencesDialog::onModelSelectionChanged()
     } else {
         m_previewImage->setText(info.displayName);
     }
+
+    m_pendingPreviewModelId = modelId;
+    m_previewDebounce.start();
 }
 
 QPixmap PreferencesDialog::loadThumbnail(const QString &modelPath) const
@@ -670,6 +682,14 @@ void PreferencesDialog::loadSettingsFromConfig()
     m_frameRateCombo->setCurrentIndex(comboIndex >= 0 ? comboIndex : 1);
 
     m_autoStartCheck->setChecked(AutoStart::isEnabled());
+}
+
+void PreferencesDialog::setPreviewImage(const QImage &image)
+{
+    if (image.isNull()) return;
+    QPixmap pix = QPixmap::fromImage(image);
+    m_previewImage->setPixmap(
+        pix.scaled(220, 220, Qt::KeepAspectRatio, Qt::SmoothTransformation));
 }
 
 void PreferencesDialog::onSettingsAccepted()

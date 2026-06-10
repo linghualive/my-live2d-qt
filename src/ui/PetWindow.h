@@ -38,9 +38,12 @@ private slots:
     void onMouseMoved(QPoint rel, QPoint raw);
     void onMousePressed(QPoint rel, QPoint raw);
     void onMouseReleased(QPoint rel, QPoint raw);
+    void previewModel(const QString &modelId);
+    void restoreOriginalModel();
 
 private:
     void initMouseTracker();
+    void loadModelIntoWidget(const QString &modelId);
 
     Configuration *m_config;
     ModelManager *m_modelManager;
@@ -57,6 +60,7 @@ private:
     bool m_hiddenByHover = false;
     QPoint m_dragStartPos;
     QTimer m_hoverTimer;
+    QString m_previewOriginalModelId;
 };
 
 #endif // PETWINDOW_H

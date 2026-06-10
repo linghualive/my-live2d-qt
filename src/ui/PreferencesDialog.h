@@ -4,6 +4,7 @@
 #include <QDialog>
 #include <QMap>
 #include <QPixmap>
+#include <QTimer>
 
 class QListWidget;
 class QListWidgetItem;
@@ -27,8 +28,12 @@ public:
                                QWidget *parent = nullptr);
     ~PreferencesDialog() override = default;
 
+public slots:
+    void setPreviewImage(const QImage &image);
+
 signals:
     void modelSelected(const QString &modelId);
+    void modelPreviewRequested(const QString &modelId);
     void settingsChanged();
 
 private slots:
@@ -77,6 +82,8 @@ private:
     QCheckBox *m_autoStartCheck;
 
     QMap<QString, QPixmap> m_thumbnailCache;
+    QTimer m_previewDebounce;
+    QString m_pendingPreviewModelId;
 };
 
 #endif // PREFERENCESDIALOG_H

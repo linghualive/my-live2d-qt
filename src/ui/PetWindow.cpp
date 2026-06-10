@@ -19,7 +19,6 @@
 #include <QDir>
 #include <QGuiApplication>
 #include <QMouseEvent>
-#include <QProcess>
 #include <QScreen>
 #include <QShowEvent>
 
@@ -85,6 +84,8 @@ PetWindow::PetWindow(Configuration *config, ModelManager *modelManager,
             m_preferencesDialog = new PreferencesDialog(m_modelManager, m_config);
             connect(m_preferencesDialog, &PreferencesDialog::modelSelected,
                     this, &PetWindow::switchModel);
+            connect(m_preferencesDialog, &PreferencesDialog::modelPreviewRequested,
+                    this, &PetWindow::previewModel);
             connect(m_preferencesDialog, &PreferencesDialog::settingsChanged,
                     this, [this]() {
                 applyConfiguration();
@@ -95,6 +96,8 @@ PetWindow::PetWindow(Configuration *config, ModelManager *modelManager,
                     m_live2dWidget->setFrameRate(m_config->frameRate());
                 }
             });
+            connect(m_preferencesDialog, &QDialog::finished,
+                    this, &PetWindow::restoreOriginalModel);
         }
         m_preferencesDialog->show();
         m_preferencesDialog->raise();
@@ -156,10 +159,48 @@ void PetWindow::switchModel(const QString &modelId)
 
     m_config->setModelId(modelId);
     m_config->save();
+    m_previewOriginalModelId.clear();
+    loadModelIntoWidget(modelId);
+}
 
-    QProcess::startDetached(QCoreApplication::applicationFilePath(),
-                            QCoreApplication::arguments());
-    QCoreApplication::quit();
+void PetWindow::loadModelIntoWidget(const QString &modelId)
+{
+    if (!m_initialized || !m_live2dWidget) return;
+
+    ModelInfo info = m_modelManager->modelInfo(modelId);
+    if (info.id.isEmpty()) return;
+
+    QDir modelDir(info.path);
+    QString dirName = modelDir.dirName();
+    modelDir.cdUp();
+    QString parentPath = modelDir.absolutePath() + QStringLiteral("/");
+    m_live2dWidget->setResDir(parentPath.toStdString());
+    m_live2dWidget->setModel(dirName.toStdString(),
+                             info.modelFile.toStdString());
+}
+
+void PetWindow::previewModel(const QString &modelId)
+{
+    if (!m_initialized || !m_live2dWidget) return;
+
+    if (m_previewOriginalModelId.isEmpty()) {
+        m_previewOriginalModelId = m_config->modelId();
+    }
+
+    loadModelIntoWidget(modelId);
+
+    QImage preview = m_live2dWidget->grabFramebuffer();
+    if (m_preferencesDialog) {
+        m_preferencesDialog->setPreviewImage(preview);
+    }
+}
+
+void PetWindow::restoreOriginalModel()
+{
+    if (m_previewOriginalModelId.isEmpty()) return;
+
+    loadModelIntoWidget(m_previewOriginalModelId);
+    m_previewOriginalModelId.clear();
 }
 
 void PetWindow::onLive2dInitialized(QLive2dWidget *wid)
@@ -168,16 +209,7 @@ void PetWindow::onLive2dInitialized(QLive2dWidget *wid)
 
     const QString modelId = m_config->modelId();
     if (!modelId.isEmpty()) {
-        ModelInfo info = m_modelManager->modelInfo(modelId);
-        if (!info.id.isEmpty()) {
-            QDir modelDir(info.path);
-            QString dirName = modelDir.dirName();
-            modelDir.cdUp();
-            QString parentPath = modelDir.absolutePath() + QStringLiteral("/");
-            wid->setResDir(parentPath.toStdString());
-            wid->setModel(dirName.toStdString(),
-                          info.modelFile.toStdString());
-        }
+        loadModelIntoWidget(modelId);
     }
 
     wid->setFrameRate(m_config->frameRate());
