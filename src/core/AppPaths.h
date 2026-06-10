@@ -26,6 +26,16 @@ inline QString lockFile()
     return baseDir() + QStringLiteral("QDesktopPet.lock");
 }
 
+inline QString pendingModelFile()
+{
+    return baseDir() + QStringLiteral(".pending_model");
+}
+
+inline QString modelBlacklistFile()
+{
+    return baseDir() + QStringLiteral(".model_blacklist");
+}
+
 inline void ensureDirsExist()
 {
     QDir().mkpath(baseDir());

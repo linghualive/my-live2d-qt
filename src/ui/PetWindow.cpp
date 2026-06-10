@@ -16,11 +16,16 @@
 #include "platform/macos/MacWindowHelper.h"
 #endif
 
+#include "core/AppPaths.h"
+
 #include <QDir>
+#include <QFile>
 #include <QGuiApplication>
+#include <QMessageBox>
 #include <QMouseEvent>
 #include <QScreen>
 #include <QShowEvent>
+#include <QTextStream>
 
 #ifdef HAS_MACOS
 #include "platform/macos/MacWindowHelper.h"
@@ -153,7 +158,13 @@ void PetWindow::updatePosition()
 void PetWindow::switchModel(const QString &modelId)
 {
     ModelInfo info = m_modelManager->modelInfo(modelId);
-    if (info.id.isEmpty()) {
+    if (info.id.isEmpty()) return;
+
+    if (isModelBlacklisted(modelId)) {
+        QMessageBox::warning(m_preferencesDialog ? static_cast<QWidget*>(m_preferencesDialog) : static_cast<QWidget*>(this),
+            QStringLiteral("Model Error"),
+            QStringLiteral("This model was previously detected as incompatible "
+                           "with the current Live2D SDK and cannot be used."));
         return;
     }
 
@@ -170,6 +181,8 @@ void PetWindow::loadModelIntoWidget(const QString &modelId)
     ModelInfo info = m_modelManager->modelInfo(modelId);
     if (info.id.isEmpty()) return;
 
+    writePendingModel(modelId);
+
     QDir modelDir(info.path);
     QString dirName = modelDir.dirName();
     modelDir.cdUp();
@@ -177,11 +190,21 @@ void PetWindow::loadModelIntoWidget(const QString &modelId)
     m_live2dWidget->setResDir(parentPath.toStdString());
     m_live2dWidget->setModel(dirName.toStdString(),
                              info.modelFile.toStdString());
+
+    clearPendingModel();
 }
 
 void PetWindow::previewModel(const QString &modelId)
 {
     if (!m_initialized || !m_live2dWidget) return;
+
+    if (isModelBlacklisted(modelId)) {
+        QMessageBox::warning(m_preferencesDialog ? static_cast<QWidget*>(m_preferencesDialog) : static_cast<QWidget*>(this),
+            QStringLiteral("Model Error"),
+            QStringLiteral("This model was previously detected as incompatible "
+                           "with the current Live2D SDK and cannot be loaded."));
+        return;
+    }
 
     if (m_previewOriginalModelId.isEmpty()) {
         m_previewOriginalModelId = m_config->modelId();
@@ -201,6 +224,40 @@ void PetWindow::restoreOriginalModel()
 
     loadModelIntoWidget(m_previewOriginalModelId);
     m_previewOriginalModelId.clear();
+}
+
+bool PetWindow::isModelBlacklisted(const QString &modelId) const
+{
+    QFile file(AppPaths::modelBlacklistFile());
+    if (!file.open(QIODevice::ReadOnly | QIODevice::Text)) return false;
+    QTextStream in(&file);
+    while (!in.atEnd()) {
+        if (in.readLine().trimmed() == modelId) return true;
+    }
+    return false;
+}
+
+void PetWindow::blacklistModel(const QString &modelId)
+{
+    if (isModelBlacklisted(modelId)) return;
+    QFile file(AppPaths::modelBlacklistFile());
+    if (file.open(QIODevice::Append | QIODevice::Text)) {
+        QTextStream out(&file);
+        out << modelId << '\n';
+    }
+}
+
+void PetWindow::writePendingModel(const QString &modelId)
+{
+    QFile file(AppPaths::pendingModelFile());
+    if (file.open(QIODevice::WriteOnly | QIODevice::Text)) {
+        file.write(modelId.toUtf8());
+    }
+}
+
+void PetWindow::clearPendingModel()
+{
+    QFile::remove(AppPaths::pendingModelFile());
 }
 
 void PetWindow::onLive2dInitialized(QLive2dWidget *wid)

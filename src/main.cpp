@@ -1,9 +1,12 @@
 #include <QApplication>
 #include <QDir>
+#include <QFile>
 #include <QMessageBox>
 #include <QSurfaceFormat>
+#include <QTextStream>
 #include <memory>
 
+#include "core/AppPaths.h"
 #include "core/ProcessLock.h"
 #include "core/Configuration.h"
 #include "core/ModelManager.h"
@@ -25,6 +28,38 @@ static QString findBundledResourcesDir()
     return {};
 }
 
+static void handleCrashedModel(Configuration *config)
+{
+    QFile pendingFile(AppPaths::pendingModelFile());
+    if (!pendingFile.exists()) return;
+
+    QString crashedModelId;
+    if (pendingFile.open(QIODevice::ReadOnly | QIODevice::Text)) {
+        crashedModelId = QString::fromUtf8(pendingFile.readAll()).trimmed();
+        pendingFile.close();
+    }
+    pendingFile.remove();
+
+    if (crashedModelId.isEmpty()) return;
+
+    // Add to blacklist
+    QFile blacklist(AppPaths::modelBlacklistFile());
+    if (blacklist.open(QIODevice::Append | QIODevice::Text)) {
+        QTextStream out(&blacklist);
+        out << crashedModelId << '\n';
+    }
+
+    // Revert to a different model
+    if (config->modelId() == crashedModelId) {
+        config->setModelId(QString());
+    }
+
+    QMessageBox::warning(nullptr, QStringLiteral("Model Error"),
+        QStringLiteral("The model \"%1\" caused a crash and has been disabled. "
+                       "It will be skipped in future loading attempts.")
+            .arg(crashedModelId));
+}
+
 int main(int argc, char *argv[])
 {
     QSurfaceFormat fmt;
@@ -38,6 +73,11 @@ int main(int argc, char *argv[])
     QCoreApplication::setOrganizationName(QStringLiteral("QDesktopPet"));
     QCoreApplication::setApplicationName(QStringLiteral("QDesktopPet"));
 
+    AppPaths::ensureDirsExist();
+    auto config = std::make_unique<Configuration>();
+
+    handleCrashedModel(config.get());
+
     ProcessLock lock;
     if (!lock.tryLock()) {
         QMessageBox::warning(nullptr, QStringLiteral("QDesktopPet"),
@@ -45,7 +85,6 @@ int main(int argc, char *argv[])
         return 1;
     }
 
-    auto config = std::make_unique<Configuration>();
     auto modelManager = std::make_unique<ModelManager>();
     modelManager->scanModels();
 

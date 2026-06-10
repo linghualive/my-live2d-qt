@@ -26,9 +26,7 @@ void ModelManager::migrateOldModelsDir()
     const QString oldBase = QStandardPaths::writableLocation(QStandardPaths::AppDataLocation)
                             + QStringLiteral("/models/");
     const QDir oldDir(oldBase);
-    if (!oldDir.exists()) {
-        return;
-    }
+    if (!oldDir.exists()) return;
 
     const QString newBase = AppPaths::modelsDir();
     const QStringList subdirs = oldDir.entryList(QDir::Dirs | QDir::NoDotAndDotDot);
@@ -39,6 +37,9 @@ void ModelManager::migrateOldModelsDir()
             copyDirectoryRecursively(src, dst);
         }
     }
+
+    // Remove old directory after migration to prevent re-importing deleted models
+    QDir(oldBase).removeRecursively();
 }
 
 void ModelManager::scanModels()
