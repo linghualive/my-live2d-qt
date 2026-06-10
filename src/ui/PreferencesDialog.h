@@ -4,7 +4,6 @@
 #include <QDialog>
 #include <QMap>
 #include <QPixmap>
-#include <QTimer>
 
 class QListWidget;
 class QListWidgetItem;
@@ -66,6 +65,7 @@ private:
     QLabel *m_modelSize;
     QLabel *m_modelMotions;
     QLabel *m_modelTextures;
+    QPushButton *m_previewButton;
     QPushButton *m_applyButton;
     QPushButton *m_deleteButton;
     QPushButton *m_importButton;
@@ -82,8 +82,6 @@ private:
     QCheckBox *m_autoStartCheck;
 
     QMap<QString, QPixmap> m_thumbnailCache;
-    QTimer m_previewDebounce;
-    QString m_pendingPreviewModelId;
 };
 
 #endif // PREFERENCESDIALOG_H

@@ -231,14 +231,6 @@ PreferencesDialog::PreferencesDialog(ModelManager *manager,
     setStyleSheet(QString::fromUtf8(kStyleSheet));
     setupUi();
 
-    m_previewDebounce.setSingleShot(true);
-    m_previewDebounce.setInterval(300);
-    connect(&m_previewDebounce, &QTimer::timeout, this, [this]() {
-        if (!m_pendingPreviewModelId.isEmpty()) {
-            emit modelPreviewRequested(m_pendingPreviewModelId);
-        }
-    });
-
     connect(m_manager, &ModelManager::modelsChanged,
             this, &PreferencesDialog::refreshModelList);
 
@@ -369,6 +361,16 @@ QWidget *PreferencesDialog::createModelsPage()
     addInfoRow(QStringLiteral("Textures"), m_modelTextures);
 
     detailLayout->addStretch();
+
+    m_previewButton = new QPushButton(QStringLiteral("Preview"), detailFrame);
+    m_previewButton->setCursor(Qt::PointingHandCursor);
+    connect(m_previewButton, &QPushButton::clicked, this, [this]() {
+        QListWidgetItem *current = m_modelGrid->currentItem();
+        if (current) {
+            emit modelPreviewRequested(current->data(Qt::UserRole).toString());
+        }
+    });
+    detailLayout->addWidget(m_previewButton);
 
     m_applyButton = new QPushButton(QStringLiteral("Use This Model"), detailFrame);
     m_applyButton->setObjectName(QStringLiteral("applyButton"));
@@ -578,8 +580,6 @@ void PreferencesDialog::onModelSelectionChanged()
         m_previewImage->setText(info.displayName);
     }
 
-    m_pendingPreviewModelId = modelId;
-    m_previewDebounce.start();
 }
 
 QPixmap PreferencesDialog::loadThumbnail(const QString &modelPath) const
