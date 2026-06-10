@@ -5,6 +5,7 @@
 
 namespace MacWindowHelper {
     void makeFullyTransparent(QWidget *window);
+    void setIgnoresMouseEvents(QWidget *window, bool ignores);
 }
 
 #endif

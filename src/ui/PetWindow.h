@@ -3,6 +3,7 @@
 
 #include <QWidget>
 #include <QPoint>
+#include <QTimer>
 #include <memory>
 
 class QLive2dWidget;
@@ -53,7 +54,9 @@ private:
 
     bool m_initialized;
     bool m_dragging = false;
+    bool m_hiddenByHover = false;
     QPoint m_dragStartPos;
+    QTimer m_hoverTimer;
 };
 
 #endif // PETWINDOW_H

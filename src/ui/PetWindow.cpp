@@ -12,6 +12,10 @@
 
 #include "QLive2dWidget.hpp"
 
+#ifdef HAS_MACOS
+#include "platform/macos/MacWindowHelper.h"
+#endif
+
 #include <QDir>
 #include <QGuiApplication>
 #include <QMouseEvent>
@@ -33,6 +37,19 @@ PetWindow::PetWindow(Configuration *config, ModelManager *modelManager,
     , m_preferencesDialog(nullptr)
     , m_initialized(false)
 {
+    m_hoverTimer.setSingleShot(true);
+    connect(&m_hoverTimer, &QTimer::timeout, this, [this]() {
+        if (m_hiddenByHover) {
+            m_hiddenByHover = false;
+#ifdef HAS_MACOS
+            MacWindowHelper::setIgnoresMouseEvents(this, false);
+#else
+            setAttribute(Qt::WA_TransparentForMouseEvents, false);
+#endif
+            if (m_live2dWidget)
+                m_live2dWidget->show();
+        }
+    });
     // Window flags: frameless, always on top, tool window
     setWindowFlags(Qt::FramelessWindowHint
                    | Qt::WindowStaysOnTopHint
@@ -191,17 +208,22 @@ void PetWindow::onMouseMoved(QPoint rel, QPoint raw)
 
     m_live2dWidget->mouseMove(rel);
 
-    // Hide-on-hover logic
+    // Hide-on-hover: hide model when mouse enters, restore after a delay
     if (m_config->hideOnHover()) {
-        QPoint localPos = m_live2dWidget->mapFromGlobal(raw);
-        QRect widgetRect = m_live2dWidget->rect();
+        QPoint localPos = mapFromGlobal(raw);
+        bool inside = rect().contains(localPos);
 
-        if (widgetRect.contains(localPos) && m_live2dWidget->isVisible()) {
+        if (inside && !m_hiddenByHover) {
+            m_hiddenByHover = true;
             m_live2dWidget->hide();
+#ifdef HAS_MACOS
+            MacWindowHelper::setIgnoresMouseEvents(this, true);
+#else
             setAttribute(Qt::WA_TransparentForMouseEvents, true);
-        } else if (!widgetRect.contains(localPos) && !m_live2dWidget->isVisible()) {
-            setAttribute(Qt::WA_TransparentForMouseEvents, false);
-            m_live2dWidget->show();
+#endif
+            m_hoverTimer.start(1500);
+        } else if (inside && m_hiddenByHover) {
+            m_hoverTimer.start(1500);
         }
     }
 }

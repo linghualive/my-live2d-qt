@@ -34,4 +34,16 @@ void makeFullyTransparent(QWidget *window)
     setLayerTransparent(nsView);
 }
 
+void setIgnoresMouseEvents(QWidget *window, bool ignores)
+{
+    if (!window)
+        return;
+
+    NSView *nsView = (__bridge NSView *)reinterpret_cast<void *>(window->winId());
+    if (!nsView || !nsView.window)
+        return;
+
+    nsView.window.ignoresMouseEvents = ignores;
+}
+
 }
