@@ -9,40 +9,7 @@ on:
   workflow_dispatch:
 
 jobs:
-  linux-x11:
-    runs-on: ubuntu-24.04
-    steps:
-      - uses: actions/checkout@v4
-
-      - name: Install dependencies
-        run: |
-          sudo apt-get update
-          sudo apt-get install -y \
-            build-essential cmake \
-            qt6-base-dev libqt6opengl6-dev qt6-base-private-dev \
-            libgl1-mesa-dev libglu1-mesa-dev \
-            libx11-dev libxext-dev libxtst-dev \
-            libxkbcommon-dev
-
-      - name: Configure
-        run: cmake -B build -DCMAKE_BUILD_TYPE=Release
-
-      - name: Build
-        run: cmake --build build -j$(nproc)
-
-      - name: Package
-        run: |
-          mkdir -p dist/QDesktopPet-linux-x11
-          cp build/QDesktopPet dist/QDesktopPet-linux-x11/
-          [ -d build/Resources ] && cp -r build/Resources dist/QDesktopPet-linux-x11/ || true
-          tar czf QDesktopPet-linux-x11.tar.gz -C dist QDesktopPet-linux-x11
-
-      - uses: actions/upload-artifact@v4
-        with:
-          name: QDesktopPet-linux-x11
-          path: QDesktopPet-linux-x11.tar.gz
-
-  linux-archlinux:
+  linux-qt6:
     runs-on: ubuntu-24.04
     container: archlinux:latest
     steps:
@@ -67,39 +34,41 @@ jobs:
 
       - name: Package
         run: |
-          mkdir -p dist/QDesktopPet-archlinux
-          cp build/QDesktopPet dist/QDesktopPet-archlinux/
-          [ -d build/Resources ] && cp -r build/Resources dist/QDesktopPet-archlinux/ || true
-          tar czf QDesktopPet-archlinux.tar.gz -C dist QDesktopPet-archlinux
+          mkdir -p dist/QDesktopPet-linux-qt6
+          cp build/QDesktopPet dist/QDesktopPet-linux-qt6/
+          [ -d build/Resources ] && cp -r build/Resources dist/QDesktopPet-linux-qt6/ || true
+          tar czf QDesktopPet-linux-qt6.tar.gz -C dist QDesktopPet-linux-qt6
 
       - uses: actions/upload-artifact@v4
         with:
-          name: QDesktopPet-archlinux
-          path: QDesktopPet-archlinux.tar.gz
+          name: QDesktopPet-linux-qt6
+          path: QDesktopPet-linux-qt6.tar.gz
 
   linux-qt5:
-    runs-on: ubuntu-22.04
+    runs-on: ubuntu-24.04
+    container: archlinux:latest
     steps:
-      - uses: actions/checkout@v4
-
-      - name: Install dependencies (Qt5 only)
+      - name: Install dependencies
         run: |
-          sudo apt-get update
-          sudo apt-get install -y \
-            build-essential cmake \
-            qtbase5-dev libqt5opengl5-dev \
-            libgl1-mesa-dev libglu1-mesa-dev \
-            libx11-dev libxext-dev libxtst-dev \
-            libxkbcommon-dev
+          pacman -Syu --noconfirm
+          pacman -S --noconfirm \
+            base-devel cmake git \
+            qt5-base mesa libx11 libxext libxtst libxkbcommon \
+            wayland pkg-config
+
+      - uses: actions/checkout@v4
 
       - name: Configure
         run: cmake -B build -DCMAKE_BUILD_TYPE=Release
 
       - name: Verify Qt5 selected
-        run: cmake -B build 2>&1 | grep -q "Using Qt5" || (echo "ERROR: Qt5 was not selected" && false)
+        run: grep -q "Using Qt5" build/CMakeFiles/CMakeOutput.log 2>/dev/null || cmake -B build 2>&1 | tee /dev/stderr | grep -q "Using Qt5"
 
       - name: Build
         run: cmake --build build -j$(nproc)
+
+      - name: Diagnose
+        run: build/QDesktopPet --diagnose || true
 
       - name: Package
         run: |
@@ -112,41 +81,6 @@ jobs:
         with:
           name: QDesktopPet-linux-qt5
           path: QDesktopPet-linux-qt5.tar.gz
-
-  linux-wayland:
-    runs-on: ubuntu-24.04
-    steps:
-      - uses: actions/checkout@v4
-
-      - name: Install dependencies
-        run: |
-          sudo apt-get update
-          sudo apt-get install -y \
-            build-essential cmake \
-            qt6-base-dev libqt6opengl6-dev qt6-base-private-dev \
-            libgl1-mesa-dev libglu1-mesa-dev \
-            libwayland-dev libwayland-client0 \
-            libx11-dev libxext-dev libxtst-dev \
-            libxkbcommon-dev \
-            pkg-config
-
-      - name: Configure
-        run: cmake -B build -DCMAKE_BUILD_TYPE=Release
-
-      - name: Build
-        run: cmake --build build -j$(nproc)
-
-      - name: Package
-        run: |
-          mkdir -p dist/QDesktopPet-linux-wayland
-          cp build/QDesktopPet dist/QDesktopPet-linux-wayland/
-          [ -d build/Resources ] && cp -r build/Resources dist/QDesktopPet-linux-wayland/ || true
-          tar czf QDesktopPet-linux-wayland.tar.gz -C dist QDesktopPet-linux-wayland
-
-      - uses: actions/upload-artifact@v4
-        with:
-          name: QDesktopPet-linux-wayland
-          path: QDesktopPet-linux-wayland.tar.gz
 
   macos:
     runs-on: macos-14
@@ -215,7 +149,7 @@ jobs:
 
   release:
     if: startsWith(github.ref, 'refs/tags/v')
-    needs: [linux-x11, linux-qt5, linux-archlinux, linux-wayland, macos, windows]
+    needs: [linux-qt6, linux-qt5, macos, windows]
     runs-on: ubuntu-latest
     permissions:
       contents: write
@@ -230,9 +164,7 @@ jobs:
           draft: false
           generate_release_notes: true
           files: |
-            artifacts/QDesktopPet-linux-x11/QDesktopPet-linux-x11.tar.gz
+            artifacts/QDesktopPet-linux-qt6/QDesktopPet-linux-qt6.tar.gz
             artifacts/QDesktopPet-linux-qt5/QDesktopPet-linux-qt5.tar.gz
-            artifacts/QDesktopPet-archlinux/QDesktopPet-archlinux.tar.gz
-            artifacts/QDesktopPet-linux-wayland/QDesktopPet-linux-wayland.tar.gz
             artifacts/QDesktopPet-macos-arm64/QDesktopPet-macos-arm64.zip
             artifacts/QDesktopPet-windows-x64/QDesktopPet-windows-x64.zip
