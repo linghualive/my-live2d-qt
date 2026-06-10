@@ -42,6 +42,41 @@ jobs:
           name: QDesktopPet-linux-x11
           path: QDesktopPet-linux-x11.tar.gz
 
+  linux-archlinux:
+    runs-on: ubuntu-24.04
+    container: archlinux:latest
+    steps:
+      - name: Install dependencies
+        run: |
+          pacman -Syu --noconfirm
+          pacman -S --noconfirm \
+            base-devel cmake git \
+            qt6-base mesa libx11 libxext libxtst libxkbcommon \
+            wayland pkg-config
+
+      - uses: actions/checkout@v4
+
+      - name: Configure
+        run: cmake -B build -DCMAKE_BUILD_TYPE=Release
+
+      - name: Build
+        run: cmake --build build -j$(nproc)
+
+      - name: Diagnose
+        run: build/QDesktopPet --diagnose || true
+
+      - name: Package
+        run: |
+          mkdir -p dist/QDesktopPet-archlinux
+          cp build/QDesktopPet dist/QDesktopPet-archlinux/
+          [ -d build/Resources ] && cp -r build/Resources dist/QDesktopPet-archlinux/ || true
+          tar czf QDesktopPet-archlinux.tar.gz -C dist QDesktopPet-archlinux
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: QDesktopPet-archlinux
+          path: QDesktopPet-archlinux.tar.gz
+
   linux-wayland:
     runs-on: ubuntu-24.04
     steps:
@@ -144,7 +179,7 @@ jobs:
 
   release:
     if: startsWith(github.ref, 'refs/tags/v')
-    needs: [linux-x11, linux-wayland, macos, windows]
+    needs: [linux-x11, linux-archlinux, linux-wayland, macos, windows]
     runs-on: ubuntu-latest
     permissions:
       contents: write
@@ -160,6 +195,7 @@ jobs:
           generate_release_notes: true
           files: |
             artifacts/QDesktopPet-linux-x11/QDesktopPet-linux-x11.tar.gz
+            artifacts/QDesktopPet-archlinux/QDesktopPet-archlinux.tar.gz
             artifacts/QDesktopPet-linux-wayland/QDesktopPet-linux-wayland.tar.gz
             artifacts/QDesktopPet-macos-arm64/QDesktopPet-macos-arm64.zip
             artifacts/QDesktopPet-windows-x64/QDesktopPet-windows-x64.zip
