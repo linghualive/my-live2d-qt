@@ -90,9 +90,95 @@ CMake 会自动检测 X11 和 Wayland 库，输出类似：
 
 如果 X11 检测结果为 OFF，请确认 `libxtst` 已安装（X11 RECORD 扩展用于鼠标追踪）。
 
+### Windows
+
+```bash
+# 需要 Visual Studio 2019+ 或 MinGW，以及 Qt 6
+cmake -B build -DCMAKE_BUILD_TYPE=Release
+cmake --build build --config Release
+```
+
 ### 添加模型
 
 将 Live2D 模型文件夹放到 `Resources/` 目录下（与 `Mao`、`Wanko` 等同级），重新构建即可自动打包。运行后通过托盘菜单切换模型。
+
+也可以在运行时通过托盘菜单 → Preferences → Models → Import 导入模型，模型会复制到 `~/.qdesktoppet/models/`。
+
+## 开发调试
+
+### Arch Linux 开发环境搭建
+
+一键安装所有开发依赖：
+
+```bash
+sudo pacman -S base-devel cmake qt6-base mesa libx11 libxext libxtst libxkbcommon gdb
+# 可选：Wayland 支持
+sudo pacman -S wayland pkg-config
+# 可选：IDE
+sudo pacman -S qt6-tools    # Qt Creator / Designer
+```
+
+Debug 构建 + 运行：
+
+```bash
+# 克隆
+git clone https://github.com/lsk-china/my-live2d-qt.git
+cd my-live2d-qt
+
+# Debug 构建（带调试符号，不优化）
+cmake -B build -DCMAKE_BUILD_TYPE=Debug
+cmake --build build -j$(nproc)
+
+# 运行（控制台输出 Qt 调试信息）
+QT_LOGGING_RULES="*.debug=true" ./build/QDesktopPet
+
+# GDB 调试
+gdb ./build/QDesktopPet
+
+# 修改代码后增量编译，通常只需几秒
+cmake --build build -j$(nproc)
+```
+
+### 使用 IDE
+
+**Qt Creator：**
+直接打开项目根目录的 `CMakeLists.txt`，Qt Creator 会自动配置构建、运行和调试。
+
+**VS Code：**
+安装 `CMake Tools` 和 `C/C++` 扩展，打开项目文件夹后选择 Debug 构建变体即可。按 F5 启动调试。
+
+**CLion：**
+直接打开项目文件夹，CLion 自动识别 CMake 项目。
+
+### 常用调试技巧
+
+```bash
+# 查看平台检测结果
+cmake -B build 2>&1 | grep "Platform detection" -A 5
+
+# 强制使用 X11（在 Wayland 桌面环境下）
+QT_QPA_PLATFORM=xcb ./build/QDesktopPet
+
+# 强制使用 Wayland
+QT_QPA_PLATFORM=wayland ./build/QDesktopPet
+
+# 查看 OpenGL 信息
+QSG_INFO=1 ./build/QDesktopPet
+
+# 清理重建
+rm -rf build && cmake -B build -DCMAKE_BUILD_TYPE=Debug && cmake --build build -j$(nproc)
+```
+
+### 数据目录
+
+运行时数据存储在 `~/.qdesktoppet/`：
+
+| 文件/目录 | 说明 |
+|-----------|------|
+| `config.ini` | 用户配置（窗口大小、模型选择等） |
+| `models/` | 用户导入的模型 |
+| `QDesktopPet.lock` | 单实例锁文件 |
+| `model_blacklist.txt` | 不兼容模型列表 |
 
 ## 项目结构
 
