@@ -2,10 +2,11 @@ name: Build
 
 on:
   push:
-    branches: [master]
+    branches: [master, v3.0-rewrite]
     tags: ['v*']
   pull_request:
     branches: [master]
+  workflow_dispatch:
 
 jobs:
   linux-x11:
