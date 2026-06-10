@@ -175,7 +175,8 @@ void PetWindow::onLive2dInitialized(QLive2dWidget *wid)
             modelDir.cdUp();
             QString parentPath = modelDir.absolutePath() + QStringLiteral("/");
             wid->setResDir(parentPath.toStdString());
-            wid->setModel(dirName.toStdString());
+            wid->setModel(dirName.toStdString(),
+                          info.modelFile.toStdString());
         }
     }
 

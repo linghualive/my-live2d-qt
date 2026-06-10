@@ -1,10 +1,10 @@
 #include "ProcessLock.h"
+#include "AppPaths.h"
 
 ProcessLock::ProcessLock()
 {
-    const QString lockPath = QStandardPaths::writableLocation(QStandardPaths::TempLocation)
-                             + QStringLiteral("/QDesktopPet.lock");
-    m_lockFile = std::make_unique<QLockFile>(lockPath);
+    AppPaths::ensureDirsExist();
+    m_lockFile = std::make_unique<QLockFile>(AppPaths::lockFile());
 }
 
 ProcessLock::~ProcessLock()

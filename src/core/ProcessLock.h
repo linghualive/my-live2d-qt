@@ -2,7 +2,6 @@
 #define PROCESSLOCK_H
 
 #include <QLockFile>
-#include <QStandardPaths>
 #include <memory>
 
 class ProcessLock {

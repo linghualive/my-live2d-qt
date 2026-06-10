@@ -22,7 +22,7 @@ public:
     void paintGL()override;
     void clear();
     void setResDir(string resDir);
-    void setModel(string model);
+    void setModel(string model, string modelFile = "");
     void setFrameRate(int fps);
     void mouseMove(QPoint rel);
     void mousePress(QPoint rel);

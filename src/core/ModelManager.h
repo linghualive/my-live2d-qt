@@ -29,6 +29,7 @@ signals:
 private:
     static qint64 calculateDirSize(const QString &dirPath);
     static void copyDirectoryRecursively(const QString &srcPath, const QString &dstPath);
+    static void migrateOldModelsDir();
 
     QList<ModelInfo> m_models;
 };

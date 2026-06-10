@@ -1,4 +1,5 @@
 #include "Configuration.h"
+#include "AppPaths.h"
 
 #include <QDir>
 #include <QFile>
@@ -7,10 +8,9 @@
 Configuration::Configuration(QObject *parent)
     : QObject(parent)
 {
+    AppPaths::ensureDirsExist();
     m_settings = std::make_unique<QSettings>(
-        QSettings::UserScope,
-        QStringLiteral("QDesktopPet"),
-        QStringLiteral("QDesktopPet"));
+        AppPaths::configFile(), QSettings::IniFormat);
 
     migrateOldConfig();
     load();
@@ -118,27 +118,45 @@ void Configuration::save()
 
 void Configuration::migrateOldConfig()
 {
-    const QString oldConfigPath = QDir::homePath()
-                                  + QStringLiteral("/.config/lsk/QDesktopPet.conf");
-    QFileInfo oldFileInfo(oldConfigPath);
-    if (!oldFileInfo.exists()) {
-        return;
+    // Migrate from v1 config (~/.config/lsk/QDesktopPet.conf)
+    const QString v1Path = QDir::homePath()
+                           + QStringLiteral("/.config/lsk/QDesktopPet.conf");
+    if (QFileInfo::exists(v1Path)) {
+        QSettings oldSettings(v1Path, QSettings::IniFormat);
+        const QString resourceDir = oldSettings.value(QStringLiteral("resourceDir")).toString();
+        if (!resourceDir.isEmpty()) {
+            const QDir dir(resourceDir);
+            const QString dirName = dir.dirName();
+            if (!dirName.isEmpty()) {
+                m_settings->setValue(QStringLiteral("modelId"), dirName);
+            }
+        }
+        m_settings->sync();
+        QFile::remove(v1Path);
     }
 
-    QSettings oldSettings(oldConfigPath, QSettings::IniFormat);
-    const QString resourceDir = oldSettings.value(QStringLiteral("resourceDir")).toString();
-
-    if (!resourceDir.isEmpty()) {
-        // Extract the directory name from the old resourceDir path as the modelId
-        const QDir dir(resourceDir);
-        const QString dirName = dir.dirName();
-        if (!dirName.isEmpty()) {
-            m_settings->setValue(QStringLiteral("modelId"), dirName);
+    // Migrate from v2 config (QStandardPaths-based QSettings)
+    if (m_settings->allKeys().isEmpty()) {
+        QSettings v2Settings(QSettings::UserScope,
+                             QStringLiteral("QDesktopPet"),
+                             QStringLiteral("QDesktopPet"));
+        static const QStringList knownKeys = {
+            QStringLiteral("modelId"),
+            QStringLiteral("hideOnHover"),
+            QStringLiteral("widgetOnLeft"),
+            QStringLiteral("mouseSensibility"),
+            QStringLiteral("widgetSize"),
+            QStringLiteral("frameRate"),
+        };
+        bool migrated = false;
+        for (const QString &key : knownKeys) {
+            if (v2Settings.contains(key)) {
+                m_settings->setValue(key, v2Settings.value(key));
+                migrated = true;
+            }
+        }
+        if (migrated) {
+            m_settings->sync();
         }
     }
-
-    m_settings->sync();
-
-    // Remove the old config file
-    QFile::remove(oldConfigPath);
 }

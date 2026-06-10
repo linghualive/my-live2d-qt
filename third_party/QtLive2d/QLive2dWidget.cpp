@@ -100,9 +100,12 @@ void QLive2dWidget::mouseMove(QPoint rel) {
     appDelegateInstance->rawMouseMoveEvent(rel);
 }
 
-void QLive2dWidget::setModel(string model) {
+void QLive2dWidget::setModel(string model, string modelFile) {
     this->makeCurrent();
-    appLive2DManagerInstance->ChangeModel(model, this->resourceDir);
+    if (modelFile.empty()) {
+        modelFile = model + ".model3.json";
+    }
+    appLive2DManagerInstance->ChangeModel(model, this->resourceDir, modelFile);
     this->clear();
     glFinish();
     this->doneCurrent();

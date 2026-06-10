@@ -220,10 +220,10 @@ void LAppLive2DManager::ChangeScene(Csm::csmInt32 index)
     }
 }
 
-void LAppLive2DManager::ChangeModel(std::string model, std::string resourceDir) {
+void LAppLive2DManager::ChangeModel(std::string model, std::string resourceDir, std::string modelFile) {
     using namespace std;
     string modelPath = resourceDir + model + "/";
-    string modelJsonName = model + ".model3.json";
+    string modelJsonName = modelFile.empty() ? model + ".model3.json" : modelFile;
     ReleaseAllModel();
     LAppDelegate::GetInstance()->GetTextureManager()->ReleaseTextures();
     _models.PushBack(new LAppModel());

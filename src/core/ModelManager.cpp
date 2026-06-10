@@ -1,4 +1,5 @@
 #include "ModelManager.h"
+#include "AppPaths.h"
 
 #include <QDateTime>
 #include <QDir>
@@ -16,17 +17,33 @@ ModelManager::ModelManager(QObject *parent)
 
 QString ModelManager::modelsBaseDir()
 {
-    const QString baseDir = QStandardPaths::writableLocation(QStandardPaths::AppDataLocation)
+    AppPaths::ensureDirsExist();
+    return AppPaths::modelsDir();
+}
+
+void ModelManager::migrateOldModelsDir()
+{
+    const QString oldBase = QStandardPaths::writableLocation(QStandardPaths::AppDataLocation)
                             + QStringLiteral("/models/");
-    QDir dir(baseDir);
-    if (!dir.exists()) {
-        dir.mkpath(QStringLiteral("."));
+    const QDir oldDir(oldBase);
+    if (!oldDir.exists()) {
+        return;
     }
-    return baseDir;
+
+    const QString newBase = AppPaths::modelsDir();
+    const QStringList subdirs = oldDir.entryList(QDir::Dirs | QDir::NoDotAndDotDot);
+    for (const QString &sub : subdirs) {
+        const QString src = oldDir.absoluteFilePath(sub);
+        const QString dst = newBase + sub;
+        if (!QDir(dst).exists()) {
+            copyDirectoryRecursively(src, dst);
+        }
+    }
 }
 
 void ModelManager::scanModels()
 {
+    migrateOldModelsDir();
     m_models.clear();
 
     const QDir baseDir(modelsBaseDir());
