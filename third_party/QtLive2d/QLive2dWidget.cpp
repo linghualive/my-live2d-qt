@@ -21,6 +21,7 @@ QLive2dWidget::QLive2dWidget(QWidget *parent):
     fmt.setAlphaBufferSize(8);
     fmt.setDepthBufferSize(24);
     fmt.setStencilBufferSize(8);
+    fmt.setSwapInterval(0);
     this->setFormat(fmt);
 
     this->setAttribute(Qt::WA_AlwaysStackOnTop);
@@ -31,7 +32,7 @@ QLive2dWidget::QLive2dWidget(QWidget *parent):
     //Add the render into Timer to make the animation
     QTimer *timer = new QTimer(this);
     connect(timer, &QTimer::timeout, this, &QLive2dWidget::updateMotions);
-    timer->start(1);
+    timer->start(66);
 
     // the OpenGL in OpenGLWidget won't scale by HDPI setting, we need to scale manually.
     ratio = parent->devicePixelRatio();
@@ -51,9 +52,6 @@ void QLive2dWidget::calcRatios() {
     } else {
         ratio_x = ratio_y = ratio;
     }
-    cout << "ratio_x: " << ratio_x << endl;
-    cout << "ratio_y: " << ratio_y << endl;
-    cout << "ratio: " << ratio << endl;
 }
 
 void QLive2dWidget::initializeGL()

@@ -157,7 +157,6 @@ void LAppModel::SetupModel(ICubismModelSetting* setting)
         for (csmInt32 i = 0; i < count; i++)
         {
             csmString name = _modelSetting->GetExpressionName(i);
-            std::cout << name.GetRawString() << std::endl;
             csmString path = _modelSetting->GetExpressionFileName(i);
             path = _modelHomeDir + path;
 

@@ -66,11 +66,11 @@ namespace LAppDefine {
     const csmInt32 PriorityForce = 3;
 
     // デバッグ用ログの表示オプション
-    const csmBool DebugLogEnable = true;
+    const csmBool DebugLogEnable = false;
     const csmBool DebugTouchLogEnable = false;
 
     // Frameworkから出力するログのレベル設定
-    const CubismFramework::Option::LogLevel CubismLoggingLevel = CubismFramework::Option::LogLevel_Verbose;
+    const CubismFramework::Option::LogLevel CubismLoggingLevel = CubismFramework::Option::LogLevel_Off;
 
     // デフォルトのレンダーターゲットサイズ
     const csmInt32 RenderTargetWidth = 1900;
