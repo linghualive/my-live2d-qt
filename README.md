@@ -150,10 +150,56 @@ cmake --build build -j$(nproc)
 **CLion：**
 直接打开项目文件夹，CLion 自动识别 CMake 项目。
 
-### 常用调试技巧
+### 排查问题
+
+运行不正常时，先跑诊断命令：
 
 ```bash
-# 查看平台检测结果
+./build/QDesktopPet --diagnose
+```
+
+会输出类似：
+
+```
+=== QDesktopPet Diagnostics ===
+
+Qt:
+  Version:             6.9.0
+  Platform:            xcb
+  Compiled with:       Qt 6.9.0
+
+OpenGL:
+  [OK] Context:           4.6 (Core Profile) Mesa 24.1.2
+  Renderer:            AMD Radeon RX 580
+  Vendor:              AMD
+
+Display:
+  [OK] X11:               running on xcb
+  [OK] RECORD ext:        v1.13
+
+Data:
+  [OK] Data dir:          /home/user/.qdesktoppet/
+  [OK] Models dir:        /home/user/.qdesktoppet/models/ (2 models)
+  [OK] Config:            /home/user/.qdesktoppet/config.ini
+
+Build:
+  HAS_X11:             yes
+  HAS_WAYLAND:         no
+```
+
+标记为 `[!!]` 的项就是问题所在。常见问题：
+
+| 诊断结果 | 解决方法 |
+|----------|---------|
+| `[!!] Context: FAILED` | 安装 GPU 驱动：`sudo pacman -S mesa` |
+| `[!!] RECORD ext: NOT available` | 安装 libxtst：`sudo pacman -S libxtst` |
+| `[!!] Models dir: (0 models)` | 把 Live2D 模型文件夹放到 `~/.qdesktoppet/models/` |
+| `HAS_X11: no` | 重新安装 X11 开发库并重新 cmake |
+
+### 其他调试技巧
+
+```bash
+# 查看编译时平台检测结果
 cmake -B build 2>&1 | grep "Platform detection" -A 5
 
 # 强制使用 X11（在 Wayland 桌面环境下）
