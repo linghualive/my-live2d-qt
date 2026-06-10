@@ -1,10 +1,14 @@
 set(PLATFORM_X11 OFF)
 set(PLATFORM_WAYLAND OFF)
 set(PLATFORM_MACOS OFF)
+set(PLATFORM_WINDOWS OFF)
 
 if(APPLE)
     set(PLATFORM_MACOS ON)
     set(LIVE2D_PLATFORM_DIR "macos-universal")
+elseif(WIN32)
+    set(PLATFORM_WINDOWS ON)
+    set(LIVE2D_PLATFORM_DIR "windows/${CMAKE_SYSTEM_PROCESSOR}")
 elseif(UNIX)
     set(LIVE2D_PLATFORM_DIR "linux-${CMAKE_SYSTEM_PROCESSOR}")
 
@@ -26,5 +30,6 @@ endif()
 
 message(STATUS "Platform detection:")
 message(STATUS "  macOS:   ${PLATFORM_MACOS}")
+message(STATUS "  Windows: ${PLATFORM_WINDOWS}")
 message(STATUS "  X11:     ${PLATFORM_X11}")
 message(STATUS "  Wayland: ${PLATFORM_WAYLAND}")

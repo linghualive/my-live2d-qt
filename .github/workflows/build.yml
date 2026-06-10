@@ -95,19 +95,55 @@ jobs:
 
       - name: Package
         run: |
-          mkdir -p dist/QDesktopPet-macos
-          cp build/QDesktopPet dist/QDesktopPet-macos/
-          cp -r build/Resources dist/QDesktopPet-macos/
-          tar czf QDesktopPet-macos-arm64.tar.gz -C dist QDesktopPet-macos
+          QT_PREFIX=$(brew --prefix qt@6)
+          "${QT_PREFIX}/bin/macdeployqt" build/QDesktopPet.app -libpath="${QT_PREFIX}/lib"
+          cd build && zip -r ../QDesktopPet-macos-arm64.zip QDesktopPet.app
 
       - uses: actions/upload-artifact@v4
         with:
           name: QDesktopPet-macos-arm64
-          path: QDesktopPet-macos-arm64.tar.gz
+          path: QDesktopPet-macos-arm64.zip
+
+  windows:
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install Qt
+        uses: jurplel/install-qt-action@v4
+        with:
+          version: '6.7.*'
+          modules: 'qtimageformats'
+
+      - name: Configure
+        run: cmake -B build -DCMAKE_BUILD_TYPE=Release
+
+      - name: Build
+        run: cmake --build build --config Release
+
+      - name: Package
+        shell: pwsh
+        run: |
+          $deployDir = "dist/QDesktopPet-windows"
+          New-Item -ItemType Directory -Force -Path $deployDir
+          Copy-Item "build/Release/QDesktopPet.exe" $deployDir/
+          Copy-Item "build/Release/Live2DCubismCore.dll" $deployDir/
+          if (Test-Path "build/Release/Resources") {
+            Copy-Item -Recurse "build/Release/Resources" $deployDir/
+          } elseif (Test-Path "build/Resources") {
+            Copy-Item -Recurse "build/Resources" $deployDir/
+          }
+          & windeployqt --release --no-translations "$deployDir/QDesktopPet.exe"
+          Compress-Archive -Path "$deployDir" -DestinationPath "QDesktopPet-windows-x64.zip"
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: QDesktopPet-windows-x64
+          path: QDesktopPet-windows-x64.zip
 
   release:
     if: startsWith(github.ref, 'refs/tags/v')
-    needs: [linux-x11, linux-wayland, macos]
+    needs: [linux-x11, linux-wayland, macos, windows]
     runs-on: ubuntu-latest
     permissions:
       contents: write
@@ -124,4 +160,5 @@ jobs:
           files: |
             artifacts/QDesktopPet-linux-x11/QDesktopPet-linux-x11.tar.gz
             artifacts/QDesktopPet-linux-wayland/QDesktopPet-linux-wayland.tar.gz
-            artifacts/QDesktopPet-macos-arm64/QDesktopPet-macos-arm64.tar.gz
+            artifacts/QDesktopPet-macos-arm64/QDesktopPet-macos-arm64.zip
+            artifacts/QDesktopPet-windows-x64/QDesktopPet-windows-x64.zip

@@ -88,7 +88,7 @@ PetWindow::PetWindow(Configuration *config, ModelManager *modelManager,
     // Input passthrough: on X11 use XShape to pass clicks through transparent pixels.
     // On macOS/Wayland, WA_TransparentForMouseEvents blocks ALL interaction
     // (including drag), so we skip it — the small window is acceptable.
-#ifdef HAS_X11
+#if defined(HAS_X11) || defined(HAS_WINDOWS)
     m_inputPassthrough = PlatformFactory::createInputPassthrough();
     if (m_inputPassthrough) {
         m_inputPassthrough->enablePassthrough(this);

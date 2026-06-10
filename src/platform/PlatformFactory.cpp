@@ -22,6 +22,11 @@
 #include "macos/MacInputPassthrough.h"
 #endif
 
+#ifdef HAS_WINDOWS
+#include "windows/WinMouseTracker.h"
+#include "windows/WinInputPassthrough.h"
+#endif
+
 std::unique_ptr<IMouseTracker> PlatformFactory::createMouseTracker(WId windowId,
                                                                     double sensibility,
                                                                     QObject *parent) {
@@ -42,6 +47,12 @@ std::unique_ptr<IMouseTracker> PlatformFactory::createMouseTracker(WId windowId,
 #ifdef HAS_MACOS
     if (platform == QStringLiteral("cocoa")) {
         return std::make_unique<MacMouseTracker>(windowId, sensibility, parent);
+    }
+#endif
+
+#ifdef HAS_WINDOWS
+    if (platform == QStringLiteral("windows")) {
+        return std::make_unique<WinMouseTracker>(windowId, sensibility, parent);
     }
 #endif
 
@@ -68,6 +79,12 @@ std::unique_ptr<IInputPassthrough> PlatformFactory::createInputPassthrough() {
 #ifdef HAS_MACOS
     if (platform == QStringLiteral("cocoa")) {
         return std::make_unique<MacInputPassthrough>();
+    }
+#endif
+
+#ifdef HAS_WINDOWS
+    if (platform == QStringLiteral("windows")) {
+        return std::make_unique<WinInputPassthrough>();
     }
 #endif
 

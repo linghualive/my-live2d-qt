@@ -99,6 +99,14 @@ if(PLATFORM_MACOS)
         src/platform/macos/MacWindowHelper.h
         src/platform/macos/MacWindowHelper.mm
     )
+elseif(PLATFORM_WINDOWS)
+    list(APPEND PLATFORM_SOURCES
+        src/platform/windows/WinMouseTracker.h
+        src/platform/windows/WinMouseTracker.cpp
+        src/platform/windows/WinInputPassthrough.h
+        src/platform/windows/WinInputPassthrough.cpp
+        src/platform/windows/WinAutoStart.cpp
+    )
 else()
     list(APPEND PLATFORM_SOURCES
         src/platform/AutoStartStub.cpp
@@ -130,6 +138,8 @@ if(APPLE)
     else()
         set(CUBISM_CORE_LIB_DIR "${CMAKE_SOURCE_DIR}/third_party/CubismCore/lib/macos/x86_64")
     endif()
+elseif(WIN32)
+    set(CUBISM_CORE_LIB_DIR "${CMAKE_SOURCE_DIR}/third_party/CubismCore/lib/windows/x86_64")
 elseif(UNIX)
     set(CUBISM_CORE_LIB_DIR "${CMAKE_SOURCE_DIR}/third_party/CubismCore/lib/linux/${CMAKE_SYSTEM_PROCESSOR}")
 endif()
@@ -196,6 +206,18 @@ if(PLATFORM_MACOS)
         "-framework IOKit"
     )
     target_compile_definitions(QDesktopPet PRIVATE HAS_MACOS)
+endif()
+
+if(PLATFORM_WINDOWS)
+    target_link_libraries(QDesktopPet PRIVATE user32 advapi32)
+    target_compile_definitions(QDesktopPet PRIVATE HAS_WINDOWS)
+    set_target_properties(QDesktopPet PROPERTIES WIN32_EXECUTABLE TRUE)
+    add_custom_command(TARGET QDesktopPet POST_BUILD
+        COMMAND ${CMAKE_COMMAND} -E copy_if_different
+            "${CUBISM_CORE_LIB_DIR}/Live2DCubismCore.dll"
+            "$<TARGET_FILE_DIR:QDesktopPet>/Live2DCubismCore.dll"
+        COMMENT "Copying Live2DCubismCore.dll..."
+    )
 endif()
 
 # Suppress OpenGL deprecation warnings on macOS
