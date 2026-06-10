@@ -4,6 +4,7 @@
 #include "../IMouseTracker.h"
 
 #include <QThread>
+#include <QWindow>
 
 class WinMouseTracker : public IMouseTracker {
     Q_OBJECT

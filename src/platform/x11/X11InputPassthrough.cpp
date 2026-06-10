@@ -20,7 +20,11 @@
 #undef Unsorted
 
 #if QT_VERSION >= QT_VERSION_CHECK(6, 0, 0)
+#if __has_include(<QNativeInterface>)
 #include <QNativeInterface>
+#else
+#include <QtGui/qguiapplication_platform.h>
+#endif
 #else
 #include <QX11Info>
 #endif

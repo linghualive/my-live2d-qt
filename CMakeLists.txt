@@ -209,8 +209,8 @@ if(PLATFORM_MACOS)
 endif()
 
 if(PLATFORM_WINDOWS)
-    target_link_libraries(QDesktopPet PRIVATE user32 advapi32)
-    target_compile_definitions(QDesktopPet PRIVATE HAS_WINDOWS)
+    target_link_libraries(QDesktopPet PRIVATE user32 advapi32 opengl32)
+    target_compile_definitions(QDesktopPet PRIVATE HAS_WINDOWS CSM_TARGET_WIN_GL)
     set_target_properties(QDesktopPet PROPERTIES WIN32_EXECUTABLE TRUE)
     add_custom_command(TARGET QDesktopPet POST_BUILD
         COMMAND ${CMAKE_COMMAND} -E copy_if_different
