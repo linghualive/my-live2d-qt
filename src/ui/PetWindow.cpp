@@ -136,7 +136,6 @@ void PetWindow::applyConfiguration()
 
     if (m_live2dWidget) {
         m_live2dWidget->setGeometry(0, 0, sz.width(), sz.height());
-        m_live2dWidget->update();
     }
 }
 
@@ -202,6 +201,9 @@ bool PetWindow::loadModelIntoWidget(const QString &modelId)
 
     if (!ok) {
         blacklistModel(modelId);
+    } else {
+        m_currentLoadedModelId = modelId;
+        QTimer::singleShot(150, this, &PetWindow::autoFitWindow);
     }
 
     return ok;
@@ -223,15 +225,17 @@ void PetWindow::previewModel(const QString &modelId)
         m_previewOriginalModelId = m_config->modelId();
     }
 
-    if (!loadModelIntoWidget(modelId)) {
-        QMessageBox::warning(m_preferencesDialog ? static_cast<QWidget*>(m_preferencesDialog) : static_cast<QWidget*>(this),
-            QStringLiteral("Model Error"),
-            QStringLiteral("Failed to load model \"%1\". It may be incompatible "
-                           "with the current Live2D SDK.").arg(modelId));
-        if (!m_previewOriginalModelId.isEmpty()) {
-            loadModelIntoWidget(m_previewOriginalModelId);
+    if (modelId != m_currentLoadedModelId) {
+        if (!loadModelIntoWidget(modelId)) {
+            QMessageBox::warning(m_preferencesDialog ? static_cast<QWidget*>(m_preferencesDialog) : static_cast<QWidget*>(this),
+                QStringLiteral("Model Error"),
+                QStringLiteral("Failed to load model \"%1\". It may be incompatible "
+                               "with the current Live2D SDK.").arg(modelId));
+            if (!m_previewOriginalModelId.isEmpty() && m_previewOriginalModelId != modelId) {
+                loadModelIntoWidget(m_previewOriginalModelId);
+            }
+            return;
         }
-        return;
     }
 
     QImage preview = m_live2dWidget->grabFramebuffer();
@@ -280,6 +284,56 @@ void PetWindow::writePendingModel(const QString &modelId)
 void PetWindow::clearPendingModel()
 {
     QFile::remove(AppPaths::pendingModelFile());
+}
+
+QRect PetWindow::findVisibleBounds(const QImage &image) const
+{
+    const int w = image.width();
+    const int h = image.height();
+    if (w == 0 || h == 0) return {};
+
+    int top = h, bottom = -1, left = w, right = -1;
+    for (int y = 0; y < h; ++y) {
+        const QRgb *row = reinterpret_cast<const QRgb *>(image.constScanLine(y));
+        for (int x = 0; x < w; ++x) {
+            if (qAlpha(row[x]) > 10) {
+                if (y < top) top = y;
+                if (y > bottom) bottom = y;
+                if (x < left) left = x;
+                if (x > right) right = x;
+            }
+        }
+    }
+    if (bottom < 0) return {};
+    return QRect(left, top, right - left + 1, bottom - top + 1);
+}
+
+void PetWindow::autoFitWindow()
+{
+    if (!m_live2dWidget || !m_initialized) return;
+
+    int h = m_config->widgetSize().height();
+
+    // Reset to square so measurement is unbiased by previous model's aspect ratio
+    setGeometry(geometry().x(), geometry().y(), h, h);
+    m_live2dWidget->setGeometry(0, 0, h, h);
+
+    // grabFramebuffer re-renders at the new viewport size
+    QImage frame = m_live2dWidget->grabFramebuffer();
+    QRect bounds = findVisibleBounds(frame);
+    if (bounds.isEmpty()) return;
+
+    int mx = qMax(bounds.width() * 15 / 100, 10);
+    int my = qMax(bounds.height() * 15 / 100, 10);
+    bounds.adjust(-mx / 2, -my / 2, mx / 2, my / 2);
+    bounds = bounds.intersected(frame.rect());
+
+    float aspect = static_cast<float>(bounds.width()) / bounds.height();
+    int w = qBound(100, static_cast<int>(h * aspect), 2000);
+
+    m_config->setWidgetSize(QSize(w, h));
+    m_config->save();
+    applyConfiguration();
 }
 
 void PetWindow::onLive2dInitialized(QLive2dWidget *wid)

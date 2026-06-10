@@ -25,6 +25,7 @@
 #include <QSpinBox>
 #include <QStackedWidget>
 #include <QImage>
+#include <QShowEvent>
 #include <QVBoxLayout>
 
 static const char *kStyleSheet = R"(
@@ -182,10 +183,49 @@ static const char *kStyleSheet = R"(
         border: 1px solid #45475a;
         border-radius: 6px;
         padding: 4px 8px;
+        padding-right: 24px;
         font-size: 13px;
     }
     QSpinBox:focus {
         border-color: #89b4fa;
+    }
+    QSpinBox::up-button {
+        subcontrol-origin: border;
+        subcontrol-position: top right;
+        width: 20px;
+        border-left: 1px solid #45475a;
+        border-top-right-radius: 6px;
+        background-color: #313244;
+    }
+    QSpinBox::up-button:hover {
+        background-color: #45475a;
+    }
+    QSpinBox::up-arrow {
+        image: none;
+        border-left: 4px solid transparent;
+        border-right: 4px solid transparent;
+        border-bottom: 5px solid #cdd6f4;
+        width: 0;
+        height: 0;
+    }
+    QSpinBox::down-button {
+        subcontrol-origin: border;
+        subcontrol-position: bottom right;
+        width: 20px;
+        border-left: 1px solid #45475a;
+        border-bottom-right-radius: 6px;
+        background-color: #313244;
+    }
+    QSpinBox::down-button:hover {
+        background-color: #45475a;
+    }
+    QSpinBox::down-arrow {
+        image: none;
+        border-left: 4px solid transparent;
+        border-right: 4px solid transparent;
+        border-top: 5px solid #cdd6f4;
+        width: 0;
+        height: 0;
     }
     QGroupBox {
         border: 1px solid #45475a;
@@ -230,6 +270,15 @@ PreferencesDialog::PreferencesDialog(ModelManager *manager,
     resize(960, 600);
     setStyleSheet(QString::fromUtf8(kStyleSheet));
     setupUi();
+
+    m_previewDebounce.setSingleShot(true);
+    m_previewDebounce.setInterval(300);
+    connect(&m_previewDebounce, &QTimer::timeout, this, [this]() {
+        QListWidgetItem *current = m_modelGrid->currentItem();
+        if (current) {
+            emit modelPreviewRequested(current->data(Qt::UserRole).toString());
+        }
+    });
 
     connect(m_manager, &ModelManager::modelsChanged,
             this, &PreferencesDialog::refreshModelList);
@@ -361,16 +410,6 @@ QWidget *PreferencesDialog::createModelsPage()
     addInfoRow(QStringLiteral("Textures"), m_modelTextures);
 
     detailLayout->addStretch();
-
-    m_previewButton = new QPushButton(QStringLiteral("Preview"), detailFrame);
-    m_previewButton->setCursor(Qt::PointingHandCursor);
-    connect(m_previewButton, &QPushButton::clicked, this, [this]() {
-        QListWidgetItem *current = m_modelGrid->currentItem();
-        if (current) {
-            emit modelPreviewRequested(current->data(Qt::UserRole).toString());
-        }
-    });
-    detailLayout->addWidget(m_previewButton);
 
     m_applyButton = new QPushButton(QStringLiteral("Use This Model"), detailFrame);
     m_applyButton->setObjectName(QStringLiteral("applyButton"));
@@ -580,6 +619,7 @@ void PreferencesDialog::onModelSelectionChanged()
         m_previewImage->setText(info.displayName);
     }
 
+    m_previewDebounce.start();
 }
 
 QPixmap PreferencesDialog::loadThumbnail(const QString &modelPath) const
@@ -692,6 +732,12 @@ void PreferencesDialog::setPreviewImage(const QImage &image)
         pix.scaled(220, 220, Qt::KeepAspectRatio, Qt::SmoothTransformation));
 }
 
+void PreferencesDialog::showEvent(QShowEvent *event)
+{
+    QDialog::showEvent(event);
+    loadSettingsFromConfig();
+}
+
 void PreferencesDialog::onSettingsAccepted()
 {
     m_config->setMouseSensibility(m_sensibilitySlider->value() * 0.1);
@@ -704,4 +750,13 @@ void PreferencesDialog::onSettingsAccepted()
     AutoStart::setEnabled(m_autoStartCheck->isChecked());
 
     emit settingsChanged();
+
+    auto *saveBtn = findChild<QPushButton *>(QStringLiteral("saveButton"));
+    if (saveBtn) {
+        QString original = saveBtn->text();
+        saveBtn->setText(QStringLiteral("Saved!"));
+        QTimer::singleShot(1500, saveBtn, [saveBtn, original]() {
+            saveBtn->setText(original);
+        });
+    }
 }

@@ -4,6 +4,7 @@
 #include <QDialog>
 #include <QMap>
 #include <QPixmap>
+#include <QTimer>
 
 class QListWidget;
 class QListWidgetItem;
@@ -29,6 +30,9 @@ public:
 
 public slots:
     void setPreviewImage(const QImage &image);
+
+protected:
+    void showEvent(QShowEvent *event) override;
 
 signals:
     void modelSelected(const QString &modelId);
@@ -65,7 +69,6 @@ private:
     QLabel *m_modelSize;
     QLabel *m_modelMotions;
     QLabel *m_modelTextures;
-    QPushButton *m_previewButton;
     QPushButton *m_applyButton;
     QPushButton *m_deleteButton;
     QPushButton *m_importButton;
@@ -81,6 +84,7 @@ private:
     QComboBox *m_frameRateCombo;
     QCheckBox *m_autoStartCheck;
 
+    QTimer m_previewDebounce;
     QMap<QString, QPixmap> m_thumbnailCache;
 };
 

@@ -44,6 +44,8 @@ private slots:
 private:
     void initMouseTracker();
     bool loadModelIntoWidget(const QString &modelId);
+    void autoFitWindow();
+    QRect findVisibleBounds(const QImage &image) const;
     bool isModelBlacklisted(const QString &modelId) const;
     void blacklistModel(const QString &modelId);
     void writePendingModel(const QString &modelId);
@@ -65,6 +67,7 @@ private:
     QPoint m_dragStartPos;
     QTimer m_hoverTimer;
     QString m_previewOriginalModelId;
+    QString m_currentLoadedModelId;
 };
 
 #endif // PETWINDOW_H
