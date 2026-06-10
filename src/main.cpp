@@ -49,13 +49,13 @@ int main(int argc, char *argv[])
     auto modelManager = std::make_unique<ModelManager>();
     modelManager->scanModels();
 
-    // Auto-import bundled models on first run
-    if (modelManager->models().isEmpty()) {
-        const QString bundledDir = findBundledResourcesDir();
-        if (!bundledDir.isEmpty()) {
-            QDir resDir(bundledDir);
-            const QStringList subdirs = resDir.entryList(QDir::Dirs | QDir::NoDotAndDotDot);
-            for (const QString &subdir : subdirs) {
+    // Auto-import bundled models that haven't been imported yet
+    const QString bundledDir = findBundledResourcesDir();
+    if (!bundledDir.isEmpty()) {
+        QDir resDir(bundledDir);
+        const QStringList subdirs = resDir.entryList(QDir::Dirs | QDir::NoDotAndDotDot);
+        for (const QString &subdir : subdirs) {
+            if (modelManager->modelInfo(subdir).id.isEmpty()) {
                 modelManager->importModel(resDir.absoluteFilePath(subdir));
             }
         }
