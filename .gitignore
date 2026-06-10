@@ -1,5 +1,24 @@
-build*/*
-/cmake-build-debug/*
-/.err
-/ui_configDialog.h
+build*/
+cmake-build-*/
 .idea/
+.vscode/
+CMakeLists.txt.user
+*.user
+.err
+
+# Generated UI headers
+ui_*.h
+
+# Compiled objects
+*.o
+*.so
+*.dylib
+
+# macOS
+.DS_Store
+*.app
+
+# Editor
+*.swp
+*.swo
+*~

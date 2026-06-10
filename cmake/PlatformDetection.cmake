@@ -1,0 +1,30 @@
+set(PLATFORM_X11 OFF)
+set(PLATFORM_WAYLAND OFF)
+set(PLATFORM_MACOS OFF)
+
+if(APPLE)
+    set(PLATFORM_MACOS ON)
+    set(LIVE2D_PLATFORM_DIR "macos-universal")
+elseif(UNIX)
+    set(LIVE2D_PLATFORM_DIR "linux-${CMAKE_SYSTEM_PROCESSOR}")
+
+    find_package(X11 COMPONENTS Xext)
+    if(X11_FOUND AND X11_Xext_FOUND)
+        set(PLATFORM_X11 ON)
+    endif()
+
+    find_package(PkgConfig)
+    if(PKG_CONFIG_FOUND)
+        pkg_check_modules(WAYLAND_CLIENT wayland-client)
+        if(WAYLAND_CLIENT_FOUND)
+            set(PLATFORM_WAYLAND ON)
+        endif()
+    endif()
+
+    find_package(X11 COMPONENTS Xtst)
+endif()
+
+message(STATUS "Platform detection:")
+message(STATUS "  macOS:   ${PLATFORM_MACOS}")
+message(STATUS "  X11:     ${PLATFORM_X11}")
+message(STATUS "  Wayland: ${PLATFORM_WAYLAND}")

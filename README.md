@@ -1,79 +1,112 @@
-# 原项目README
-## live2d-qt
-使用QWebEngineView在桌面上显示live2d模型。
+# QDesktopPet
 
-### 原理
-使用QWebEngineView加载一个只包含live2d模型的html页面，设其为全屏，并设置窗口背景透明，忽略鼠标键盘事件。
+基于 Qt + Live2D Cubism SDK 的跨平台桌面宠物，支持 macOS、Linux (X11/Wayland)。
 
-### 注意
-* 使用了`X11`提供的`XShapeCombineRectangles()`实现鼠标键盘操作的穿透，因此程序的通用性不强。
-* 设置了鼠标键盘操作的穿透，因此网页上live2d的交互效果无法实现。
-* 使用QWebEngineView，测试过程中CPU占用10%以上，影响较大。
-* 托盘图标左键点击可隐藏/显示，右键切换模型或者退出。
+通过 OpenGL 渲染 Live2D 模型，窗口背景完全透明，宠物可拖动、跟随鼠标交互。通过系统托盘管理模型切换、设置和退出。
 
-### 相关链接
-该程序的最重要部分其实是live2d的js部分，直接引用了以下项目提供的链接：
-* [live2d-widget.js](https://github.com/xiazeyu/live2d-widget.js)
-* [live2d-widget-models](https://github.com/xiazeyu/live2d-widget-models)
+## 功能
 
-# 我准备进行的修改
-* 添加万叶的Live2D V3 模型
-* 在新的线程里面通过X11 XInput监听鼠标事件 实现当鼠标滑动到模型上方时隐藏模型
-* 通过上面的方法 使模型能够和鼠标交互
-* 使用Live2D Cubism Framework Native 重构（？
+- Live2D Cubism SDK 5 原生 OpenGL 渲染（Moc3 格式模型）
+- 透明无边框窗口，真正的桌面宠物体验
+- 鼠标跟随交互 + 拖动定位
+- 系统托盘菜单：模型切换、设置、显示/隐藏
+- 可配置：窗口大小、位置、鼠标灵敏度、悬停隐藏
+- macOS 开机自启（LaunchAgent）
+- macOS 打包为 .app 应用包
 
-# 借物表
-* 万叶的模型来自 [Bilibili](https://www.bilibili.com/video/BV1xq4y1k7QR)
+## 依赖
 
-# V2.0
+| 依赖 | 说明 |
+|------|------|
+| Qt 6 (推荐) 或 Qt 5 | Core, Gui, Widgets, OpenGLWidgets |
+| OpenGL | 系统自带 |
+| CMake ≥ 3.16 | 构建系统 |
+| Live2D Cubism Core SDK | 已包含在 `third_party/CubismCore/` |
+| Live2D Cubism Native Framework | 已包含在 `third_party/CubismNativeFramework/` |
 
-基本功能已经实现，离release不远了（话说似乎除了我也没人关注这个项目）
+### Linux 额外依赖
 
-变动：
+**X11 环境：**
+```bash
+# Debian/Ubuntu
+sudo apt install libx11-dev libxext-dev libxtst-dev
 
-- 弃用占用奇高的QWebEngineView，完全使用基于OpenGL的Live2d Cubism Framework for Native实现
+# Fedora
+sudo dnf install libX11-devel libXext-devel libXtst-devel
+```
 
-- 鼠标交互（虽然有点傻）
+**Wayland 环境：**
+```bash
+# Debian/Ubuntu
+sudo apt install libwayland-dev
 
-- 可控制鼠标在模型上是否隐藏
+# Fedora
+sudo dnf install wayland-devel
+```
 
-- 支持Moc v4模型
+> Linux 上 X11 和 Wayland 支持会自动检测，可以同时编译。
 
-### 构建
+## 构建
 
-需要：
+### macOS
 
-- libLive2dWidget.a libFramework.a [仓库](https://github.com/lsk-china/QtLive2d)
+```bash
+mkdir build && cd build
+cmake ..
+make -j$(sysctl -n hw.ncpu)
 
-  注意，这里的Framework是修改过的，不可以用官方提供的替代。
+# 生成 QDesktopPet.app，可直接双击运行
+open QDesktopPet.app
 
-- libLive2DCubismCore.so 到live2d官网可下载
+# 可选：打包 Qt 框架到 .app 中（用于分发）
+make deploy
 
-先cmake生成构建目录，把这些库文件放到构建目录里面，把你的模型放到构建目录/Resources下面，把widget.cpp中第87行的模型改成你自己的模型，然后编译运行即可。
+# 可选：安装到 Applications
+cp -R QDesktopPet.app ~/Applications/
+```
 
-### 用法
-./QDesktopPet_2_cmake [resourceDir] [model] [right] <br/>
-resourceDir: 模型文件目录的父目录，必须以/结尾 <br/>
-model: 模型名称 <br/>
-right: 此参数为right则桌宠出现在屏幕右下角，否则出现左下角
+### Linux
 
+```bash
+mkdir build && cd build
+cmake ..
+make -j$(nproc)
 
-### TODO
+# 运行
+./QDesktopPet
+```
 
-- ✅ 设置资源目录，模型选择
-- 重构代码以支持wayland
-- ✅ 配置文件支持
-- 修复桌宠在右下角时鼠标跟踪的问题
-- 修复异常抖动<br/>
-  问题应该是切换窗口导致的，暂时没有解决的思路
-- 鼠标灵敏度设置
-- widget大小设置
+CMake 会自动检测 X11 和 Wayland 库，输出类似：
+```
+-- Platform detection:
+--   macOS:   OFF
+--   X11:     ON
+--   Wayland: ON
+```
 
-# V3.0
-Coming soon....
+### 添加模型
 
-### TODO
+将 Live2D 模型文件夹放到 `Resources/` 目录下（与 `Mao`、`Wanko` 等同级），重新构建即可自动打包。运行后通过托盘菜单切换模型。
 
-- 动作源选择
-- 基于meidapipe或啥的面捕
-- 面补展示到模型上
+## 项目结构
+
+```
+src/
+  core/          配置、模型管理、进程锁
+  ui/            PetWindow、托盘、设置对话框
+  platform/      平台抽象层（鼠标追踪、输入穿透、自启动）
+    macos/       macOS 实现（Cocoa）
+    x11/         X11 实现
+    wayland/     Wayland 实现
+third_party/
+  QtLive2d/      Live2D 渲染 Widget
+  CubismCore/    Live2D Cubism Core SDK（预编译库）
+  CubismNativeFramework/  Live2D 框架源码
+Resources/       内置模型资源
+```
+
+## 借物表
+
+- 万叶模型来自 [Bilibili](https://www.bilibili.com/video/BV1xq4y1k7QR)
+- Live2D Cubism SDK &copy; Live2D Inc.
+- 原始项目灵感来自 [QtLive2d](https://github.com/lsk-china/QtLive2d)
