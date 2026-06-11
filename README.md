@@ -28,7 +28,10 @@
 
 **Arch Linux / Manjaro：**
 ```bash
+# Qt6（推荐）
 sudo pacman -S base-devel cmake qt6-base mesa libx11 libxext libxtst libxkbcommon
+# 或 Qt5
+sudo pacman -S base-devel cmake qt5-base qt5-x11extras mesa libx11 libxext libxtst libxkbcommon
 # Wayland 支持（可选）：
 sudo pacman -S wayland pkg-config
 ```
@@ -111,11 +114,15 @@ cmake --build build --config Release
 一键安装所有开发依赖：
 
 ```bash
+# Qt6（推荐）
 sudo pacman -S base-devel cmake qt6-base mesa libx11 libxext libxtst libxkbcommon gdb
+# 或 Qt5
+sudo pacman -S base-devel cmake qt5-base qt5-x11extras mesa libx11 libxext libxtst libxkbcommon gdb
 # 可选：Wayland 支持
 sudo pacman -S wayland pkg-config
 # 可选：IDE
-sudo pacman -S qt6-tools    # Qt Creator / Designer
+sudo pacman -S qt6-tools    # Qt Creator / Designer（Qt6）
+sudo pacman -S qt5-tools    # Qt Creator / Designer（Qt5）
 ```
 
 Debug 构建 + 运行：
