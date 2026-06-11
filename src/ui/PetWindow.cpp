@@ -27,6 +27,12 @@
 #include <QShowEvent>
 #include <QTextStream>
 
+#if QT_VERSION >= QT_VERSION_CHECK(6, 0, 0)
+#define GLOBAL_POS(e) (e)->globalPosition().toPoint()
+#else
+#define GLOBAL_POS(e) (e)->globalPos()
+#endif
+
 #ifdef HAS_MACOS
 #include "platform/macos/MacWindowHelper.h"
 #endif
@@ -439,14 +445,14 @@ bool PetWindow::eventFilter(QObject *obj, QEvent *event)
             auto *me = static_cast<QMouseEvent *>(event);
             if (me->button() == Qt::LeftButton) {
                 m_dragging = true;
-                m_dragStartPos = me->globalPosition().toPoint() - frameGeometry().topLeft();
+                m_dragStartPos = GLOBAL_POS(me) - frameGeometry().topLeft();
             }
             break;
         }
         case QEvent::MouseMove: {
             auto *me = static_cast<QMouseEvent *>(event);
             if (m_dragging && (me->buttons() & Qt::LeftButton)) {
-                move(me->globalPosition().toPoint() - m_dragStartPos);
+                move(GLOBAL_POS(me) - m_dragStartPos);
             }
             break;
         }
@@ -471,7 +477,7 @@ void PetWindow::mousePressEvent(QMouseEvent *event)
 {
     if (event->button() == Qt::LeftButton) {
         m_dragging = true;
-        m_dragStartPos = event->globalPosition().toPoint() - frameGeometry().topLeft();
+        m_dragStartPos = GLOBAL_POS(event) - frameGeometry().topLeft();
         event->accept();
     }
 }
@@ -479,7 +485,7 @@ void PetWindow::mousePressEvent(QMouseEvent *event)
 void PetWindow::mouseMoveEvent(QMouseEvent *event)
 {
     if (m_dragging && (event->buttons() & Qt::LeftButton)) {
-        move(event->globalPosition().toPoint() - m_dragStartPos);
+        move(GLOBAL_POS(event) - m_dragStartPos);
         event->accept();
     }
 }
